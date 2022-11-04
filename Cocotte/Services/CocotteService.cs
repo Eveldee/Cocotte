@@ -1,6 +1,5 @@
 using System.Reflection;
 using Cocotte.Options;
-using Cocotte.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -72,7 +71,7 @@ public class CocotteService : BackgroundService
 
                 return;
             }
-            await _interactionService.RegisterCommandsToGuildAsync(_options.DevGuildId.Value, true);
+            await _interactionService.RegisterCommandsToGuildAsync(_options.DevGuildId.Value);
         }
         else
         {
@@ -87,7 +86,7 @@ public class CocotteService : BackgroundService
 
     private async Task HandleInteraction(SocketInteraction interaction)
     {
-        _logger.LogTrace("[Interaction/Trace] Received interaction: by {user} in #{channel} of type {type}", interaction.User, interaction.Channel, interaction.Type);
+        _logger.LogTrace("[Interaction/Trace] Received interaction: by {User} in #{Channel} of type {Type}", interaction.User, interaction.Channel, interaction.Type);
 
         try
         {
@@ -99,14 +98,7 @@ public class CocotteService : BackgroundService
 
             if (!result.IsSuccess)
             {
-                _logger.LogDebug("[Interaction/Trace] Error while executing interaction: {interaction} in {channel}", interaction.Token, interaction.Channel);
-
-                switch (result.Error)
-                {
-                    case InteractionCommandError.UnmetPrecondition:
-                        // implement
-                        break;
-                }
+                _logger.LogDebug("[Interaction/Trace] Error while executing interaction: {Interaction} in {Channel} because {Error}:{Reason}", interaction.Token, interaction.Channel, result.Error, result.ErrorReason);
             }
         }
         catch

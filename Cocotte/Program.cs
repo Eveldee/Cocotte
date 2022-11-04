@@ -34,6 +34,7 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         // Custom
         services.AddSingleton<SharedCounter>();
+        services.AddTransient<TransientCounter>();
     })
     .Build();
 
