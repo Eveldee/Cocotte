@@ -8,12 +8,13 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 
-namespace Cocotte.Modules;
+namespace Cocotte.Modules.Ping;
 
 /// <summary>
 /// Module containing different test and debug commands
 /// </summary>
 [RequireOwner]
+[Group("ping", "Debug related commands")]
 public class PingModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger<PingModule> _logger;
@@ -291,7 +292,7 @@ public class FoodModal : IModal
     [ModalTextInput("food_name", placeholder: "Pizza", maxLength: 20)]
     public string? Food { get; set; }
 
-    // Additional paremeters can be specified to further customize the input.    
+    // Additional paremeters can be specified to further customize the input.
     // Parameters can be optional
     [RequiredInput(false)]
     [InputLabel("Why??")]

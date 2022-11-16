@@ -1,3 +1,4 @@
+using Cocotte.Modules.Raids;
 using Cocotte.Options;
 using Cocotte.Services;
 using Discord;
@@ -30,6 +31,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
 
         services.AddHostedService<CocotteService>();
+
+        // Data
+        services.AddSingleton<IRaidsRepository, MemoryRaidRepository>();
 
         // Custom
         services.AddSingleton<SharedCounter>();
