@@ -1,4 +1,3 @@
-using Cocotte;
 using Cocotte.Options;
 using Cocotte.Services;
 using Discord;

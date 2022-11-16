@@ -1,8 +1,12 @@
 ﻿#if DEBUG
 
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using Cocotte.Services;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 
 namespace Cocotte.Modules;
 
@@ -22,6 +26,30 @@ public class PingModule : InteractionModuleBase<SocketInteractionContext>
         _logger = logger;
         _sharedCounter = sharedCounter;
         _transientCounter = transientCounter;
+    }
+
+    [SlashCommand("runtime-info", "Get runtime info")]
+    public async Task RuntimeInfo()
+    {
+        var embed = new EmbedBuilder()
+            .WithTitle("Cocotte runtime info")
+            .WithColor(0x3196c8)
+            .WithFields(
+                new EmbedFieldBuilder()
+                    .WithName(":computer: OS")
+                    .WithValue(RuntimeInformation.OSDescription)
+                    .WithIsInline(true),
+                new EmbedFieldBuilder()
+                    .WithName(":pencil: .Net info")
+                    .WithValue(RuntimeInformation.FrameworkDescription)
+                    .WithIsInline(true),
+                new EmbedFieldBuilder()
+                    .WithName(":mirror_ball: Discord.Net info")
+                    .WithValue(Assembly.GetAssembly(typeof(Discord.Net.BucketId))!.ToString())
+                    .WithIsInline(false)
+            );
+
+        await RespondAsync(embed: embed.Build());
     }
 
     [SlashCommand("ping", "Check if Coco is alive and get latency")]
@@ -45,6 +73,33 @@ public class PingModule : InteractionModuleBase<SocketInteractionContext>
     public async Task GreetUserAsync(IUser user)
     {
         await RespondAsync($":wave: {Context.User.Username} said hi to you, <@{user.Id}>!");
+    }
+
+    [SlashCommand("summon", "Summon Coco to test if she can see and write to this channel")]
+    public async Task Summon()
+    {
+        _logger.LogTrace("{User} summoned Coco in {Channel}", Context.User.Username, Context.Channel.Name);
+
+        await RespondAsync(":white_check_mark: Coco at your service!");
+    }
+
+    [SlashCommand("reply", "Reply to a message")]
+    public async Task Reply(string channelId, string messageId)
+    {
+        var channel = Context.Client.GetChannel(ulong.Parse(channelId)) as ISocketMessageChannel;
+        var message = await channel?.GetMessageAsync(ulong.Parse(messageId))!;
+
+        if (message is IUserMessage)
+        {
+            await message.Channel.SendMessageAsync("What can I do for you?",
+                messageReference: new MessageReference(message.Id));
+
+            await RespondAsync("Reply successfully sent", ephemeral: true);
+        }
+        else
+        {
+            await RespondAsync("An error occured while sending message", ephemeral: true);
+        }
     }
 
     // Pins a message in the channel it is in.
@@ -171,6 +226,78 @@ public class PingModule : InteractionModuleBase<SocketInteractionContext>
 
         await RespondAsync();
     }
+
+    [SlashCommand("select-test", "Test menu select")]
+    public async Task SelectTest()
+    {
+        var menuBuilder = new SelectMenuBuilder()
+            .WithPlaceholder("Select an option")
+            .WithCustomId("menu-1")
+            .WithMinValues(1)
+            .WithMaxValues(1)
+            .AddOption("Option A", "opt-a", "Option B is lying!")
+            .AddOption("Option B", "opt-b", "Option A is telling the truth!");
+
+        var builder = new ComponentBuilder()
+            .WithSelectMenu(menuBuilder);
+
+        await RespondAsync("Whos really lying?", components: builder.Build());
+    }
+
+    [ComponentInteraction("menu-1")]
+    public async Task TestMenuSelected(string[] selectedChoice)
+    {
+        await RespondAsync($"You have selected: {string.Join(", ", selectedChoice)}");
+    }
+
+    [SlashCommand("modal-test", "Test a modal")]
+    public async Task ModalTest()
+    {
+        await RespondWithModalAsync<FoodModal>("food_menu");
+    }
+
+    [ModalInteraction("food_menu")]
+    public async Task FoodMenuSubmit(FoodModal modal)
+    {
+        // Check if "Why??" field is populated
+        string reason = string.IsNullOrWhiteSpace(modal.Reason)
+            ? "."
+            : $" because {modal.Reason}";
+
+        // Build the message to send.
+        string message = "hey @everyone, I just learned " +
+            $"{Context.User.Mention}'s favorite food is " +
+            $"{modal.Food}{reason}";
+
+        // Specify the AllowedMentions so we don't actually ping everyone.
+        AllowedMentions mentions = new()
+        {
+            AllowedTypes = AllowedMentionTypes.Users
+        };
+
+        // Respond to the modal.
+        await RespondAsync(message, allowedMentions: mentions, ephemeral: true);
+    }
 }
+
+// Defines the modal that will be sent.
+public class FoodModal : IModal
+{
+    public string Title => "Fav Food";
+
+    // Strings with the ModalTextInput attribute will automatically become components.
+    [NotNull]
+    [InputLabel("What??")]
+    [ModalTextInput("food_name", placeholder: "Pizza", maxLength: 20)]
+    public string? Food { get; set; }
+
+    // Additional paremeters can be specified to further customize the input.    
+    // Parameters can be optional
+    [RequiredInput(false)]
+    [InputLabel("Why??")]
+    [ModalTextInput("food_reason", TextInputStyle.Paragraph, "Kuz it's tasty", maxLength: 500)]
+    public string Reason { get; set; }
+}
+
 
 #endif
