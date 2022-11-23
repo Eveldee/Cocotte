@@ -1,6 +1,6 @@
 ﻿namespace Cocotte.Modules.Raids;
 
-public record RosterPlayer(string Name, PlayerRole Role, int Fc, bool Substitue = false)
+public record RosterPlayer(ulong Id, string Name, PlayerRole Role, int Fc, bool Substitue = false)
 {
     public int RosterNumber { get; set; }
 
@@ -17,6 +17,16 @@ public record RosterPlayer(string Name, PlayerRole Role, int Fc, bool Substitue 
         < 1_000 => $"{fc}",
         _ => $"{fc/1000}k"
     };
+
+    public override int GetHashCode()
+    {
+        return (int) (Id % int.MaxValue);
+    }
+
+    public virtual bool Equals(RosterPlayer? other)
+    {
+        return other is not null && other.Id == Id;
+    }
 
     public override string ToString() => Substitue switch
     {

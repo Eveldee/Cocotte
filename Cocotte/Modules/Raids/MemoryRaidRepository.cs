@@ -1,4 +1,6 @@
-﻿namespace Cocotte.Modules.Raids;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Cocotte.Modules.Raids;
 
 public class MemoryRaidRepository : IRaidsRepository
 {
@@ -14,5 +16,10 @@ public class MemoryRaidRepository : IRaidsRepository
     public bool AddNewRaid(ulong raidId, DateTime dateTime)
     {
         return _raids.TryAdd(raidId, new Raid(raidId, dateTime));
+    }
+
+    public bool TryGetRaid(ulong raidId, [MaybeNullWhen(false)] out Raid raid)
+    {
+        return _raids.TryGetValue(raidId, out raid);
     }
 }
