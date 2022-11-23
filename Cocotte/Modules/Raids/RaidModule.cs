@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
 using Discord.Interactions;
@@ -14,11 +15,13 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger<RaidModule> _logger;
     private readonly IRaidsRepository _raidsRepository;
+    private readonly RaidFormatter _raidFormatter;
 
-    public RaidModule(ILogger<RaidModule> logger, IRaidsRepository raidsRepository)
+    public RaidModule(ILogger<RaidModule> logger, IRaidsRepository raidsRepository, RaidFormatter raidFormatter)
     {
         _logger = logger;
         _raidsRepository = raidsRepository;
+        _raidFormatter = raidFormatter;
     }
 
     [EnabledInDm(false)]
@@ -48,14 +51,14 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
         // Build the raid message
         var raid = _raidsRepository[raidId];
-        var embed = RaidEmbed(raid);
         var components = RaidComponents(raidId);
+        var embed = _raidFormatter.RaidEmbed(raid);
 
         await ModifyOriginalResponseAsync(m =>
         {
             m.Content = "";
-            m.Embed = embed.Build();
             m.Components = components.Build();
+            m.Embed = embed.Build();
         });
     }
 
@@ -65,7 +68,7 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
         if (!_raidsRepository.TryGetRaid(raidId, out var raid))
         {
             await RespondAsync(ephemeral: true, embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build());
-            
+
             return;
         }
 
@@ -74,10 +77,10 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
         if (!raid.AddPlayer(user.Id, user.DisplayName, PlayerRole.Dps, 10000))
         {
             await RespondAsync(ephemeral: true, embed: EmbedUtils.InfoEmbed("You're already registered for this raid").Build());
-            
+
             return;
         }
-    
+
         _logger.LogInformation("User {User} joined raid {Raid}", Context.User.Username, raid);
 
         await UpdateRaidRosterEmbed(raid);
@@ -90,7 +93,7 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
         if (!_raidsRepository.TryGetRaid(raidId, out var raid))
         {
             await RespondAsync(ephemeral: true, embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build());
-            
+
             return;
         }
 
@@ -98,10 +101,10 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
         if (!raid.RemovePlayer(user.Id))
         {
             await RespondAsync(ephemeral: true, embed: EmbedUtils.WarningEmbed("You're not registered for this raid").Build());
-            
+
             return;
         }
-        
+
         await UpdateRaidRosterEmbed(raid);
         await RespondAsync(ephemeral: true, embed: EmbedUtils.SuccessEmbed("Successfully left the raid").Build());
     }
@@ -112,32 +115,8 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
         if (message is SocketUserMessage userMessage)
         {
-            await userMessage.ModifyAsync(m => m.Embed = RaidEmbed(raid).Build());            
+            await userMessage.ModifyAsync(m => m.Embed = _raidFormatter.RaidEmbed(raid).Build());
         }
-    }
-
-    private EmbedBuilder RaidEmbed(Raid raid)
-    {
-        EmbedFieldBuilder RosterEmbed(int rosterNumber, IEnumerable<RosterPlayer> players)
-        {
-            var rosterPlayers = players.ToList();
-            var nonSubstitute = rosterPlayers.Where(p => !p.Substitue);
-            var substitute = rosterPlayers.Where(p => p.Substitue);
-
-            var separatorLength = Math.Max(nonSubstitute.Select(p => p.Name.Length).Max(), substitute.Select(p => p.Name.Length).Max());
-            separatorLength = (int) ((separatorLength + 13) * 0.49); // Don't ask why, it just works
-
-            return new EmbedFieldBuilder()
-                .WithName($"Roster {rosterNumber}")
-                .WithValue($"{string.Join("\n", nonSubstitute)}\n{new string('━', separatorLength)}\n{string.Join("\n", substitute)}")
-                .WithIsInline(true);
-        }
-
-        return new EmbedBuilder()
-            .WithColor(Colors.CocotteBlue)
-            .WithTitle(":crossed_swords: Raid")
-            .WithDescription($"**Date:** {TimestampTag.FromDateTime(raid.DateTime, TimestampTagStyles.LongDateTime)}")
-            .WithFields(raid.Rosters.Select(r => RosterEmbed(r.Key, r)));
     }
 
     private ComponentBuilder RaidComponents(ulong raidId)

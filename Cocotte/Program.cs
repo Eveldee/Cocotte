@@ -34,6 +34,10 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         // Data
         services.AddSingleton<IRaidsRepository, MemoryRaidRepository>();
+        services.AddSingleton<RolesOptions>();
+
+        // Raids
+        services.AddSingleton<RaidFormatter>();
 
         // Custom
         services.AddSingleton<SharedCounter>();
