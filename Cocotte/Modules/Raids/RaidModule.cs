@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
 using Discord.Interactions;
@@ -26,8 +25,19 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
     [EnabledInDm(false)]
     [SlashCommand("start", "Start a raid formation")]
-    public async Task Start()
+    public async Task Start(DayOfWeek day, string time)
     {
+        // Check if time is valid
+        if (!TimeOnly.TryParse(time, out var timeOnly))
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Invalid time, try using format 'hh:mm'").Build()
+            );
+
+            return;
+        }
+
         // Raids are identified using their original message id
         await RespondAsync("`Creating a new raid...`");
 
@@ -36,14 +46,21 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
         _logger.LogInformation("Created new raid with id {RaidId}", raidId);
 
+        // Calculate date
+        var date = DateTime.Now.Date;
+        date = date.AddDays(DateTimeUtils.CalculateDayOfWeekOffset(date.DayOfWeek, day))
+                   .Add(timeOnly.ToTimeSpan());
+
         // New raid instance
-        // TODO: Ask for date
-        if (!_raidsRepository.AddNewRaid(raidId, DateTime.Now))
+        if (!_raidsRepository.AddNewRaid(raidId, date))
         {
             // A raid with this message id already exists, how??
             _logger.LogWarning("Tried to create a new raid with already existing id: {RaidId}", raidId);
 
-            await FollowupAsync(ephemeral: true, embed: EmbedUtils.ErrorEmbed("Can't create a new raid with same raid id").Build());
+            await FollowupAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Can't create a new raid with same raid id").Build()
+            );
             await DeleteOriginalResponseAsync();
 
             return;
@@ -67,16 +84,21 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (!_raidsRepository.TryGetRaid(raidId, out var raid))
         {
-            await RespondAsync(ephemeral: true, embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build());
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build()
+            );
 
             return;
         }
 
         // Todo: Ask role, FC, substitute
-        var user = (IGuildUser)Context.User;
+        var user = (IGuildUser) Context.User;
         if (!raid.AddPlayer(user.Id, user.DisplayName, PlayerRole.Dps, 10000))
         {
-            await RespondAsync(ephemeral: true, embed: EmbedUtils.InfoEmbed("You're already registered for this raid").Build());
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.InfoEmbed("You're already registered for this raid").Build());
 
             return;
         }
@@ -84,7 +106,10 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
         _logger.LogInformation("User {User} joined raid {Raid}", Context.User.Username, raid);
 
         await UpdateRaidRosterEmbed(raid);
-        await RespondAsync(ephemeral: true, embed: EmbedUtils.SuccessEmbed($"Successfully joined the raid as {raid.GetPlayer(user.Id).Role}").Build());
+        await RespondAsync(
+            ephemeral: true,
+            embed: EmbedUtils.SuccessEmbed($"Successfully joined the raid as {raid.GetPlayer(user.Id).Role}").Build()
+        );
     }
 
     [ComponentInteraction("raid raid_leave:*", ignoreGroupNames: true)]
@@ -92,21 +117,30 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
     {
         if (!_raidsRepository.TryGetRaid(raidId, out var raid))
         {
-            await RespondAsync(ephemeral: true, embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build());
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("This raid does not exist").Build()
+            );
 
             return;
         }
 
-        var user = (IGuildUser)Context.User;
+        var user = (IGuildUser) Context.User;
         if (!raid.RemovePlayer(user.Id))
         {
-            await RespondAsync(ephemeral: true, embed: EmbedUtils.WarningEmbed("You're not registered for this raid").Build());
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.WarningEmbed("You're not registered for this raid").Build()
+            );
 
             return;
         }
 
         await UpdateRaidRosterEmbed(raid);
-        await RespondAsync(ephemeral: true, embed: EmbedUtils.SuccessEmbed("Successfully left the raid").Build());
+        await RespondAsync(
+            ephemeral: true,
+            embed: EmbedUtils.SuccessEmbed("Successfully left the raid").Build()
+        );
     }
 
     public async Task UpdateRaidRosterEmbed(Raid raid)
@@ -115,7 +149,9 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
         if (message is SocketUserMessage userMessage)
         {
-            await userMessage.ModifyAsync(m => m.Embed = _raidFormatter.RaidEmbed(raid).Build());
+            await userMessage.ModifyAsync(
+                m => m.Embed = _raidFormatter.RaidEmbed(raid).Build()
+            );
         }
     }
 

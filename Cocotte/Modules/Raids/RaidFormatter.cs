@@ -27,7 +27,7 @@ public class RaidFormatter
         _ => $"{fc/1000}k"
     };
 
-    public string FormatRosterPlayer(RosterPlayer player) => player.Substitue switch
+    public string FormatRosterPlayer(RosterPlayer player) => player.Substitute switch
     {
         false => $"{RoleToEmote(player.Role)} {player.Name} ({FcFormat(player.Fc)} FC)",
         true => $"*{RoleToEmote(player.Role)} {player.Name} ({FcFormat(player.Fc)} FC)*"
@@ -38,8 +38,8 @@ public class RaidFormatter
         EmbedFieldBuilder RosterEmbed(int rosterNumber, IEnumerable<RosterPlayer> players)
         {
             var rosterPlayers = players.ToList();
-            var nonSubstitute = rosterPlayers.Where(p => !p.Substitue);
-            var substitute = rosterPlayers.Where(p => p.Substitue);
+            var nonSubstitute = rosterPlayers.Where(p => !p.Substitute);
+            var substitute = rosterPlayers.Where(p => p.Substitute);
 
             var separatorLength = Math.Max(nonSubstitute.Select(p => p.Name.Length).Max(), substitute.Select(p => p.Name.Length).Max());
             separatorLength = (int) ((separatorLength + 13) * 0.49); // Don't ask why, it just works
