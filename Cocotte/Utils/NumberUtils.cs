@@ -1,11 +1,16 @@
 ﻿using System.Numerics;
-using System.Text;
 
 namespace Cocotte.Utils;
 
 public static class NumberUtils
 {
-    public static string FormatSpaced<T>(this INumber<T> number) where T : INumber<T>?
+    /// <summary>
+    /// Return a string representation of an <see cref="IBinaryInteger{TSelf}" /> with digits separated by spaces
+    /// </summary>
+    /// <param name="number"></param>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public static string FormatSpaced<T>(this IBinaryInteger<T> number) where T : IBinaryInteger<T>?
     {
         var stringNumber = number.ToString(null, null);
 

@@ -6,10 +6,11 @@ public class PlayerInfo
 
     public ulong Id { get; }
 
+    private readonly uint _fc;
     public uint Fc
     {
         get => _fc;
-        set
+        init
         {
             _fc = value;
             _lastFcUpdate = DateTime.Today;
@@ -18,8 +19,7 @@ public class PlayerInfo
 
     public bool IsFcUpdateRequired => DateTime.Today - _lastFcUpdate > FcUpdateInterval;
 
-    private uint _fc;
-    private DateTime _lastFcUpdate;
+    private readonly DateTime _lastFcUpdate;
 
     public PlayerInfo(ulong id, uint fc)
     {
