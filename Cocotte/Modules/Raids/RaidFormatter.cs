@@ -37,7 +37,7 @@ public class RaidFormatter
     {
         EmbedFieldBuilder RosterEmbed(int rosterNumber, IEnumerable<RosterPlayer> players)
         {
-            var rosterPlayers = players.ToList();
+            var rosterPlayers = players.OrderByDescending(p => p.Role).ThenByDescending(p => p.Fc).ToList();
             var nonSubstitute = rosterPlayers.Where(p => !p.Substitute);
             var substitute = rosterPlayers.Where(p => p.Substitute);
 

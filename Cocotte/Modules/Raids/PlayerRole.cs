@@ -3,6 +3,6 @@
 public enum PlayerRole
 {
     Dps,
-    Healer,
-    Tank
+    Tank,
+    Healer
 }
