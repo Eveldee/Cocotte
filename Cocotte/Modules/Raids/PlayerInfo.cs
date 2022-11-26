@@ -5,12 +5,13 @@ public class PlayerInfo
     public static TimeSpan FcUpdateInterval { get; } = TimeSpan.FromDays(3);
 
     public ulong Id { get; }
+    public PlayerRole PreferredRole { get; set; } = PlayerRole.Dps;
 
-    private readonly uint _fc;
+    private uint _fc;
     public uint Fc
     {
         get => _fc;
-        init
+        set
         {
             _fc = value;
             _lastFcUpdate = DateTime.Today;
@@ -19,7 +20,7 @@ public class PlayerInfo
 
     public bool IsFcUpdateRequired => DateTime.Today - _lastFcUpdate > FcUpdateInterval;
 
-    private readonly DateTime _lastFcUpdate;
+    private DateTime _lastFcUpdate;
 
     public PlayerInfo(ulong id, uint fc)
     {

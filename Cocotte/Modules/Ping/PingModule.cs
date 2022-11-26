@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Cocotte.Services;
+using Cocotte.Utils;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -119,6 +120,32 @@ public class PingModule : InteractionModuleBase<SocketInteractionContext>
         {
             await userMessage.PinAsync();
             await RespondAsync(":white_check_mark: Successfully pinned message!");
+        }
+    }
+
+    [SlashCommand("emote", "Test sending an emote")]
+    public async Task SendEmote(string emoteText)
+    {
+        if (Emote.TryParse(emoteText, out var emote))
+        {
+            await RespondAsync($"{emote}/{emoteText}: `{emoteText}/{emote}`");
+        }
+        else
+        {
+            await RespondAsync(embed: EmbedUtils.ErrorEmbed("Couldn't parse the emote").Build());
+        }
+    }
+
+    [SlashCommand("emoji", "Test sending an emoji")]
+    public async Task SendEmoji(string emojiText)
+    {
+        if (Emoji.TryParse(emojiText, out var emoji))
+        {
+            await RespondAsync($"{emoji}/{emojiText}: `{emojiText}/{emoji}`");
+        }
+        else
+        {
+            await RespondAsync(embed: EmbedUtils.ErrorEmbed("Couldn't parse the emoji").Build());
         }
     }
 

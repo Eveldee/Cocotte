@@ -16,8 +16,18 @@ public class MemoryPlayerInfosRepository : IPlayerInfosRepository
         return _playerInfos.TryGetValue(playerId, out playerInfo);
     }
 
-    public void UpdatePlayerInfo(PlayerInfo playerInfo)
+    public void UpdatePlayerInfo(ulong id, Action<PlayerInfo> updater)
     {
-        _playerInfos[playerInfo.Id] = playerInfo;
+        if (_playerInfos.TryGetValue(id, out var playerInfo))
+        {
+            updater(playerInfo);
+        }
+        else
+        {
+            playerInfo = new PlayerInfo(id, 0);
+            updater(playerInfo);
+
+            _playerInfos[playerInfo.Id] = playerInfo;
+        }
     }
 }

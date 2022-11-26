@@ -13,12 +13,12 @@ public class RaidFormatter
         _rolesOptions = rolesOptions;
     }
 
-    public string RoleToEmote(PlayerRole role) => role switch
+    public IEmote RoleToEmote(PlayerRole role) => role switch
     {
-        PlayerRole.Dps => _rolesOptions.DpsEmote,
-        PlayerRole.Tank => _rolesOptions.TankEmote,
-        PlayerRole.Healer => _rolesOptions.HealerEmote,
-        _ => ":question:"
+        PlayerRole.Dps => _rolesOptions.DpsEmote.ToEmote(),
+        PlayerRole.Tank => _rolesOptions.TankEmote.ToEmote(),
+        PlayerRole.Healer => _rolesOptions.HealerEmote.ToEmote(),
+        _ => ":question:".ToEmote()
     };
 
     public static string FcFormat(uint fc) => fc switch

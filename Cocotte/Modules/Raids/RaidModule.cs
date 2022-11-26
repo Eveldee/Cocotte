@@ -125,7 +125,10 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
 
         if (_registerManager.RegisteringPlayers.TryGetValue((raidId, playerId), out var rosterPlayer))
         {
-            _registerManager.RegisteringPlayers[(raidId, playerId)] = rosterPlayer with {Role = selectedRole};
+            _registerManager.RegisteringPlayers[(raidId, playerId)] = rosterPlayer with { Role = selectedRole };
+
+            // Also update preferred role
+            _playerInfos.UpdatePlayerInfo(playerId, p => p.PreferredRole = selectedRole);
 
             await RespondAsync();
         }
@@ -210,7 +213,7 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        _playerInfos.UpdatePlayerInfo(new PlayerInfo(playerId, fc));
+        _playerInfos.UpdatePlayerInfo(playerId, p => p.Fc = fc);
 
         await RegisterPlayer(raidId, rosterPlayer with { Fc = fc });
     }
@@ -316,15 +319,17 @@ public class RaidModule : InteractionModuleBase<SocketInteractionContext>
     private ComponentBuilder PlayerRoleComponent(Raid raid, IGuildUser user)
     {
         var select = new SelectMenuBuilder()
-            .WithPlaceholder(PlayerRole.Dps.ToString())
             .WithCustomId($"raid player_select_role:{raid.Id}:{user.Id}")
             .WithMinValues(1)
             .WithMaxValues(1);
 
+        // Preselect preferred role
+        var preferredRole = _playerInfos.TryGetPlayerInfo(user.Id, out var playerInfo) ? playerInfo.PreferredRole : PlayerRole.Dps;
+
         foreach (var role in Enum.GetValues<PlayerRole>())
         {
-            // TODO add emote
-            select.AddOption(role.ToString(), role.ToString());
+            var roleText = role.ToString();
+            select.AddOption(roleText, roleText, emote: _raidFormatter.RoleToEmote(role), isDefault: role == preferredRole);
         }
 
         return new ComponentBuilder()
