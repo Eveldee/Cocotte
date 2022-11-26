@@ -1,6 +1,6 @@
 ﻿namespace Cocotte.Modules.Raids;
 
-public record RosterPlayer(ulong Id, string Name, PlayerRole Role, int Fc, bool Substitute = false)
+public record RosterPlayer(ulong Id, string Name, PlayerRole Role = PlayerRole.Dps, uint Fc = 0, bool Substitute = false)
 {
     public int RosterNumber { get; set; }
 

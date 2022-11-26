@@ -21,14 +21,24 @@ public class Raid
 #endif
     }
 
-    public bool AddPlayer(ulong id, string name, PlayerRole role, int fc, bool substitute = false)
+    public bool AddPlayer(RosterPlayer player)
     {
-        return _rosterManager.AddPlayer(new RosterPlayer(id, name, role, fc, substitute));
+        return _rosterManager.AddPlayer(player);
+    }
+
+    public bool UpdatePlayer(RosterPlayer rosterPlayer)
+    {
+        return _rosterManager.UpdatePlayer(rosterPlayer);
     }
 
     public RosterPlayer GetPlayer(ulong id)
     {
         return _rosterManager.GetPlayer(id);
+    }
+
+    public bool ContainsPlayer(ulong userId)
+    {
+        return _rosterManager.ContainsPlayer(userId);
     }
 
     public bool RemovePlayer(ulong id)

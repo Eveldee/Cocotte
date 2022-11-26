@@ -13,7 +13,7 @@ public class RaidFormatter
         _rolesOptions = rolesOptions;
     }
 
-    private string RoleToEmote(PlayerRole role) => role switch
+    public string RoleToEmote(PlayerRole role) => role switch
     {
         PlayerRole.Dps => _rolesOptions.DpsEmote,
         PlayerRole.Tank => _rolesOptions.TankEmote,
@@ -21,7 +21,7 @@ public class RaidFormatter
         _ => ":question:"
     };
 
-    public static string FcFormat(int fc) => fc switch
+    public static string FcFormat(uint fc) => fc switch
     {
         < 1_000 => $"{fc}",
         _ => $"{fc/1000}k"

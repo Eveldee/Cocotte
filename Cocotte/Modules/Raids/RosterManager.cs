@@ -14,6 +14,18 @@ public class RosterManager
         return _players.TryAdd(rosterPlayer.Id, rosterPlayer);
     }
 
+    public bool UpdatePlayer(RosterPlayer rosterPlayer)
+    {
+        if (!_players.ContainsKey(rosterPlayer.Id))
+        {
+            return false;
+        }
+
+        _players[rosterPlayer.Id] = rosterPlayer;
+
+        return true;
+    }
+
     public bool RemovePlayer(ulong id)
     {
         return _players.Remove(id);
@@ -22,5 +34,10 @@ public class RosterManager
     public RosterPlayer GetPlayer(ulong id)
     {
         return _players[id];
+    }
+
+    public bool ContainsPlayer(ulong userId)
+    {
+        return _players.ContainsKey(userId);
     }
 }
