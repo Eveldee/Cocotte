@@ -10,7 +10,7 @@ namespace Cocotte.Modules.Raids;
 
 [Group("raid", "Raid related commands")]
 [SuppressMessage("Performance", "CA1822:Mark members as static")]
-public class RaidModule : InteractionModuleBase<SocketInteractionContext>
+public partial class RaidModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger<RaidModule> _logger;
     private readonly IRaidsRepository _raids;
