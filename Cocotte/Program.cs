@@ -38,8 +38,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<RolesOptions>();
 
         // Raids
-        services.AddSingleton<RaidFormatter>();
+        services.AddTransient<RaidFormatter>();
         services.AddSingleton<RaidRegisterManager>();
+        services.AddTransient<RosterAssigner>();
 
         // Custom
         services.AddSingleton<SharedCounter>();
