@@ -1,4 +1,5 @@
-﻿using Cocotte.Options;
+﻿using System.Numerics;
+using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
 
@@ -21,10 +22,10 @@ public class RaidFormatter
         _ => ":question:".ToEmote()
     };
 
-    public static string FcFormat(uint fc) => fc switch
+    public static string FcFormat<T>(T fc) where T : IBinaryInteger<T> => fc switch
     {
         < 1_000 => $"{fc}",
-        _ => $"{fc/1000}k"
+        _ => $"{fc/T.CreateChecked(1000)}k"
     };
 
     public string FormatRosterPlayer(RosterPlayer player) => player.Substitute switch
@@ -42,10 +43,10 @@ public class RaidFormatter
             var substitute = rosterPlayers.Where(p => p.Substitute);
 
             var separatorLength = players.Select(p => p.Name.Length).Max();
-            separatorLength = (int) ((separatorLength + 13) * 0.49); // Don't ask why, it just works
+            separatorLength = (int) ((separatorLength + 5) * 1.31); // Don't ask why, it just works
 
             return new EmbedFieldBuilder()
-                .WithName($"Roster {rosterNumber} ({nonSubstitute.Sum(p => p.Fc)} FC)")
+                .WithName($"Roster {rosterNumber} ({FcFormat(nonSubstitute.Sum(p => p.Fc))} FC)")
                 .WithValue($"{string.Join("\n", nonSubstitute.Select(FormatRosterPlayer))}\n{new string('━', separatorLength)}\n{string.Join("\n", substitute.Select(FormatRosterPlayer))}")
                 .WithIsInline(true);
         }
