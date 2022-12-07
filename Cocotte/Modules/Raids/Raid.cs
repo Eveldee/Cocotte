@@ -14,10 +14,6 @@ public class Raid
     {
         Id = id;
         DateTime = dateTime;
-
-#if DEBUG
-        this.AddTestPlayers();
-#endif
     }
 
     public bool AddPlayer(RosterPlayer rosterPlayer)
@@ -53,6 +49,11 @@ public class Raid
     public bool RemovePlayer(ulong id)
     {
         return _players.Remove(id);
+    }
+
+    public void AssignRosters(RosterAssigner assigner)
+    {
+        assigner.AssignRosters(_players.Values, 8);
     }
 
     public override bool Equals(object? other)

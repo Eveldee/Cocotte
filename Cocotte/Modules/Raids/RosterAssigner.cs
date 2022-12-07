@@ -1,18 +1,20 @@
+using Cocotte.Utils;
+
 namespace Cocotte.Modules.Raids;
 
 public class RosterAssigner
-{    
+{
     public void AssignRosters(IEnumerable<RosterPlayer> players, uint playersPerRoster)
     {
         // Start by grouping players
         var groups = GroupPlayers(players.OrderByDescending(p => p.Fc));
-        
+
         // Create rosters
         var neededRosters = (int)Math.Ceiling(players.Count(p => !p.Substitute) / (double)playersPerRoster);
-        var rosters = new List<RosterInfo>(Enumerable.Repeat(new RosterInfo(), neededRosters));
-        
+        var rosters = Enumerable.Range(0, neededRosters).Select(_ => new RosterInfo()).ToList();
+
         // Todo Check when there's more than max players per roster
-        
+
         // First pass: assign healers and tanks
         // Always assign to the group which have the least amount of healer/tank, biased towards healers
         // Skip groups without players
@@ -21,15 +23,15 @@ public class RosterAssigner
         {
             if (group.Players.AnyHealer())
             {
-                var nextHealerRoster = rosters.MinBy(r => r.RealHealerCount());
-                
-                nextHealerRoster!.AddGroup(group);
+                var nextHealerRoster = rosters.MinBy(r => r.RealHealerCount(), (x, y) => x.TotalRealFc > y.TotalRealFc ? y : x);
+
+                nextHealerRoster.AddGroup(group);
             }
             else if (group.Players.AnyTank())
             {
-                var nextTankRoster = rosters.MinBy(r => r.RealTankCount());
+                var nextTankRoster = rosters.MinBy(r => r.RealTankCount(), (x, y) => x.TotalRealFc < y.TotalRealFc ? x : y);
 
-                nextTankRoster!.AddGroup(group);
+                nextTankRoster.AddGroup(group);
             }
             // Those groups will be used to assign dps, they should still be in descending order of FC
             else
@@ -37,30 +39,59 @@ public class RosterAssigner
                 dpsGroup.Add(group);
             }
         }
-        
+
         // Third pass: assign dps
         foreach (var group in dpsGroup)
         {
             var nextDpsRoster = rosters.MinBy(r => r.TotalRealFc);
-            
+
             nextDpsRoster!.AddGroup(group);
         }
 
-        // Last pass: fill with substitute
-        
+        // Last pass: do the same but with substitutes
+        dpsGroup = new List<PlayerGroup>();
+        foreach (var group in groups.Where(g => g.AllSubstitutes))
+        {
+            if (group.Substitutes.AnyHealer())
+            {
+                var nextHealerRoster = rosters.MinBy(r => r.TotalHealerCount(), (x, y) => x.TotalFc > y.TotalFc ? y : x);
+
+                nextHealerRoster.AddGroup(group);
+            }
+            else if (group.Substitutes.AnyTank())
+            {
+                var nextTankRoster = rosters.MinBy(r => r.TotalTankCount(), (x, y) => x.TotalFc < y.TotalFc ? x : y);
+
+                nextTankRoster.AddGroup(group);
+            }
+            // Those groups will be used to assign dps, they should still be in descending order of FC
+            else
+            {
+                dpsGroup.Add(group);
+            }
+        }
+
+        // Third pass: assign dps
+        foreach (var group in dpsGroup)
+        {
+            var nextDpsRoster = rosters.MinBy(r => r.TotalFc);
+
+            nextDpsRoster!.AddGroup(group);
+        }
+
         // Assign rosters
         for (int i = 0; i < rosters.Count; i++)
         {
             var roster = rosters[i];
 
-            roster.AssignRosterNumer(i);
+            roster.AssignRosterNumer(i + 1);
         }
     }
 
     private IList<PlayerGroup> GroupPlayers(IEnumerable<RosterPlayer> players)
     {
         var groups = new List<PlayerGroup>();
-        
+
         // Todo create groups from player preferences
         foreach (var rosterPlayer in players)
         {
@@ -90,7 +121,7 @@ public class RosterInfo
     {
         _groups.Add(group);
     }
-    
+
     public void AssignRosterNumer(int rosterNumber)
     {
         foreach (var group in _groups)
@@ -115,7 +146,7 @@ public class PlayerGroup
     {
         _players = new List<RosterPlayer>();
     }
-    
+
     public PlayerGroup(params RosterPlayer[] players)
     {
         _players = players;
@@ -125,7 +156,7 @@ public class PlayerGroup
     {
         _players.Add(player);
     }
-    
+
     public void AssignRosterNumer(int rosterNumber)
     {
         foreach (var rosterPlayer in _players)

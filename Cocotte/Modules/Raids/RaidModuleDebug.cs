@@ -26,6 +26,68 @@ public partial class RaidModule
         await AddTestPlayer(message, PlayerRole.Healer);
     }
 
+    [MessageCommand("Fill roster")]
+    public async Task FillRoster(IMessage message)
+    {
+        if (message is IUserMessage userMessage && userMessage.Author.IsBot)
+        {
+            if (_raids.TryGetRaid(userMessage.Id, out var raid))
+            {
+                // Add 3 healers
+                for (int i = 0; i < 3; i++)
+                {
+                    raid.AddPlayer(new RosterPlayer(
+                        (ulong) Random.Shared.NextInt64(),
+                        $"Healer{Random.Shared.Next(1, 100)}",
+                        PlayerRole.Healer,
+                        (uint) (1000 * Random.Shared.Next(30, 60)))
+                    );
+                }
+
+                // Add 3 tanks
+                for (int i = 0; i < 3; i++)
+                {
+                    raid.AddPlayer(new RosterPlayer(
+                        (ulong) Random.Shared.NextInt64(),
+                        $"Tank{Random.Shared.Next(1, 100)}",
+                        PlayerRole.Tank,
+                        (uint) (1000 * Random.Shared.Next(30, 60)))
+                    );
+                }
+
+                // Add 8 dps
+                for (int i = 0; i < 8; i++)
+                {
+                    raid.AddPlayer(new RosterPlayer(
+                        (ulong) Random.Shared.NextInt64(),
+                        $"Dps{Random.Shared.Next(1, 100)}",
+                        PlayerRole.Dps,
+                        (uint) (1000 * Random.Shared.Next(30, 60)))
+                    );
+                }
+
+                // Fill rest with substitutes
+                for (int i = 0; i < 6; i++)
+                {
+                    raid.AddPlayer(new RosterPlayer(
+                        (ulong) Random.Shared.NextInt64(),
+                        $"Dps{Random.Shared.Next(1, 100)}",
+                        PlayerRole.Dps,
+                        (uint) (1000 * Random.Shared.Next(30, 60)),
+                        true)
+                    );
+                }
+
+                await UpdateRaidRosterEmbed(raid);
+            }
+        }
+
+        await RespondAsync(
+            embed: EmbedUtils.SuccessEmbed($"Successfully filled the roster").Build(),
+            ephemeral: true
+        );
+    }
+
     private async Task AddTestPlayer(IMessage message, PlayerRole playerRole)
     {
         if (message is IUserMessage userMessage && userMessage.Author.IsBot)

@@ -17,15 +17,17 @@ public partial class RaidModule : InteractionModuleBase<SocketInteractionContext
     private readonly IPlayerInfosRepository _playerInfos;
     private readonly RaidFormatter _raidFormatter;
     private readonly RaidRegisterManager _registerManager;
+    private readonly RosterAssigner _rosterAssigner;
 
     public RaidModule(ILogger<RaidModule> logger, IRaidsRepository raids, IPlayerInfosRepository playerInfos,
-        RaidFormatter raidFormatter, RaidRegisterManager registerManager)
+        RaidFormatter raidFormatter, RaidRegisterManager registerManager, RosterAssigner rosterAssigner)
     {
         _logger = logger;
         _raids = raids;
         _playerInfos = playerInfos;
         _raidFormatter = raidFormatter;
         _registerManager = registerManager;
+        _rosterAssigner = rosterAssigner;
     }
 
     [EnabledInDm(false)]
@@ -293,6 +295,8 @@ public partial class RaidModule : InteractionModuleBase<SocketInteractionContext
 
         if (message is SocketUserMessage userMessage)
         {
+            raid.AssignRosters(_rosterAssigner);
+
             await userMessage.ModifyAsync(
                 m => m.Embed = _raidFormatter.RaidEmbed(raid).Build()
             );
