@@ -27,6 +27,26 @@ public static class RosterExtensions
         return players.Sum(p => p.Fc);
     }
 
+    public static long HealerFc(this IEnumerable<RosterPlayer> players)
+    {
+        return players.Where(p => p.Role == PlayerRole.Healer).Sum(p => p.Fc);
+    }
+
+    public static long TankFc(this IEnumerable<RosterPlayer> players)
+    {
+        return players.Where(p => p.Role == PlayerRole.Tank).Sum(p => p.Fc);
+    }
+
+    public static long RealHealerFc(this RosterInfo roster)
+    {
+        return roster.PlayerGroups.Sum(group => group.Players.HealerFc());
+    }
+
+    public static long RealTankFc(this RosterInfo roster)
+    {
+        return roster.PlayerGroups.Sum(group => group.Players.TankFc());
+    }
+
     public static int RealHealerCount(this RosterInfo rosterInfo)
     {
         return rosterInfo.PlayerGroups.Sum(g => g.Players.HealerCount());

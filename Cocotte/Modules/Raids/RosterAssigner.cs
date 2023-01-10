@@ -23,13 +23,13 @@ public class RosterAssigner
         {
             if (group.Players.AnyHealer())
             {
-                var nextHealerRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealHealerCount(), (x, y) => x.TotalRealFc > y.TotalRealFc ? y : x);
+                var nextHealerRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealHealerCount(), (x, y) => x.RealHealerFc() > y.RealHealerFc() ? y : x);
 
                 nextHealerRoster.AddGroup(group);
             }
             else if (group.Players.AnyTank())
             {
-                var nextTankRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealTankCount(), (x, y) => x.TotalRealFc < y.TotalRealFc ? x : y);
+                var nextTankRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealTankCount(), (x, y) => x.RealTankFc() < y.RealTankFc() ? x : y);
 
                 nextTankRoster.AddGroup(group);
             }
