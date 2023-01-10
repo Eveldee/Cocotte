@@ -74,7 +74,7 @@ public class RosterAssigner
         // Third pass: assign dps
         foreach (var group in dpsGroup)
         {
-            var nextDpsRoster = rosters.NonFull(group.Substitutes.Count()).MinBy(r => r.TotalFc);
+            var nextDpsRoster = rosters.MinBy(r => r.TotalFc);
 
             nextDpsRoster!.AddGroup(group);
         }
