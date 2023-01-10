@@ -83,7 +83,7 @@ public partial class RaidModule
         }
 
         await RespondAsync(
-            embed: EmbedUtils.SuccessEmbed($"Successfully filled the roster").Build(),
+            embed: EmbedUtils.SuccessEmbed("Successfully filled the roster").Build(),
             ephemeral: true
         );
     }

@@ -11,7 +11,7 @@ public class RosterAssigner
 
         // Create rosters
         var neededRosters = (int)Math.Ceiling(players.Count(p => !p.Substitute) / (double)playersPerRoster);
-        var rosters = Enumerable.Range(0, neededRosters).Select(_ => new RosterInfo()).ToList();
+        var rosters = Enumerable.Range(0, neededRosters).Select(_ => new RosterInfo(playersPerRoster)).ToList();
 
         // Todo Check when there's more than max players per roster
 
@@ -23,13 +23,13 @@ public class RosterAssigner
         {
             if (group.Players.AnyHealer())
             {
-                var nextHealerRoster = rosters.MinBy(r => r.RealHealerCount(), (x, y) => x.TotalRealFc > y.TotalRealFc ? y : x);
+                var nextHealerRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealHealerCount(), (x, y) => x.TotalRealFc > y.TotalRealFc ? y : x);
 
                 nextHealerRoster.AddGroup(group);
             }
             else if (group.Players.AnyTank())
             {
-                var nextTankRoster = rosters.MinBy(r => r.RealTankCount(), (x, y) => x.TotalRealFc < y.TotalRealFc ? x : y);
+                var nextTankRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.RealTankCount(), (x, y) => x.TotalRealFc < y.TotalRealFc ? x : y);
 
                 nextTankRoster.AddGroup(group);
             }
@@ -43,7 +43,7 @@ public class RosterAssigner
         // Third pass: assign dps
         foreach (var group in dpsGroup)
         {
-            var nextDpsRoster = rosters.MinBy(r => r.TotalRealFc);
+            var nextDpsRoster = rosters.NonFull(group.Players.Count()).MinBy(r => r.TotalRealFc);
 
             nextDpsRoster!.AddGroup(group);
         }
@@ -74,7 +74,7 @@ public class RosterAssigner
         // Third pass: assign dps
         foreach (var group in dpsGroup)
         {
-            var nextDpsRoster = rosters.MinBy(r => r.TotalFc);
+            var nextDpsRoster = rosters.NonFull(group.Substitutes.Count()).MinBy(r => r.TotalFc);
 
             nextDpsRoster!.AddGroup(group);
         }
@@ -109,11 +109,14 @@ public class RosterInfo
 
     public IEnumerable<PlayerGroup> PlayerGroups => _groups.Where(g => !g.AllSubstitutes);
     public IEnumerable<PlayerGroup> SubstituteGroups => _groups.Where(g => g.AllSubstitutes);
+    
+    public uint MaxPlayerCount { get; }
 
     private readonly IList<PlayerGroup> _groups;
 
-    public RosterInfo()
+    public RosterInfo(uint maxPlayerCount)
     {
+        MaxPlayerCount = maxPlayerCount;
         _groups = new List<PlayerGroup>();
     }
 
@@ -126,7 +129,7 @@ public class RosterInfo
     {
         foreach (var group in _groups)
         {
-            group.AssignRosterNumer(rosterNumber);
+            group.AssignRosterNumber(rosterNumber);
         }
     }
 }
@@ -157,7 +160,7 @@ public class PlayerGroup
         _players.Add(player);
     }
 
-    public void AssignRosterNumer(int rosterNumber)
+    public void AssignRosterNumber(int rosterNumber)
     {
         foreach (var rosterPlayer in _players)
         {

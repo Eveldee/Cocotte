@@ -46,4 +46,10 @@ public static class RosterExtensions
     {
         return rosterInfo.PlayerGroups.Concat(rosterInfo.SubstituteGroups).Sum(g => g.Players.Concat(g.Substitutes).TankCount());
     }
+
+    public static int TotalPlayerCount(this RosterInfo rosterInfo) =>
+        rosterInfo.PlayerGroups.Sum(group => group.Players.Count());
+
+    public static IEnumerable<RosterInfo> NonFull(this IEnumerable<RosterInfo> rosters, int addedPlayersCount) =>
+        rosters.Where(roster => roster.TotalPlayerCount() + addedPlayersCount <= roster.MaxPlayerCount);
 }
