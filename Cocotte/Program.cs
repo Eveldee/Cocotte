@@ -9,18 +9,21 @@ using Discord.WebSocket;
 DiscordSocketConfig discordSocketConfig = new()
 {
     LogLevel = LogSeverity.Debug,
-    MessageCacheSize = 200
+    MessageCacheSize = 200,
+    GatewayIntents = GatewayIntents.None
 };
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((_, configuration) =>
     {
         configuration.AddJsonFile("discord.json", false, false);
+        configuration.AddJsonFile("groups.json", false, false);
     })
     .ConfigureServices((context, services) =>
     {
         // Options
         services.Configure<DiscordOptions>(context.Configuration.GetSection(DiscordOptions.SectionName));
+        services.Configure<GroupsOptions>(context.Configuration.GetSection(GroupsOptions.SectionName));
 
         // Discord.Net
         services.AddHostedService<DiscordLoggingService>();
@@ -36,6 +39,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IRaidsRepository, MemoryRaidRepository>();
         services.AddSingleton<IPlayerInfosRepository, MemoryPlayerInfosRepository>();
         services.AddSingleton<RolesOptions>();
+
+        // Groups
 
         // Raids
         services.AddTransient<RaidFormatter>();

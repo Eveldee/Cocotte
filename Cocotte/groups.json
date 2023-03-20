@@ -1,0 +1,15 @@
+﻿{
+	"GroupsOptions": {
+		"HelperRoleId": 0,
+		"HelperEmote": "",
+
+		"DpsRoleId": 0,
+		"DpsEmote": "",
+
+		"TankRoleId": 0,
+		"TankEmote": "",
+
+		"HealerRoleId": 0,
+		"HealerEmote": ""
+	}
+}

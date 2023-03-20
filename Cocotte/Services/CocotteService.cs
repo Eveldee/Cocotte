@@ -15,18 +15,20 @@ public class CocotteService : BackgroundService
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly DiscordSocketClient _client;
     private readonly DiscordOptions _options;
+    private readonly GroupsOptions _groupOptions;
     private readonly InteractionService _interactionService;
 
     public CocotteService(ILogger<CocotteService> logger, IServiceProvider serviceProvider,
         IHostEnvironment hostEnvironment,
         IHostApplicationLifetime hostApplicationLifetime, DiscordSocketClient client,
-        IOptions<DiscordOptions> options, InteractionService interactionService)
+        IOptions<DiscordOptions> options, IOptions<GroupsOptions> groupOptions, InteractionService interactionService)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _hostApplicationLifetime = hostApplicationLifetime;
         _client = client;
         _options = options.Value;
+        _groupOptions = groupOptions.Value;
         _interactionService = interactionService;
         _hostEnvironment = hostEnvironment;
     }
@@ -34,12 +36,17 @@ public class CocotteService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         // Check token first
-        if (_options.Token is null)
+        if (string.IsNullOrWhiteSpace(_options.Token))
         {
             _logger.LogError("Couldn't find any discord bot token, exiting...");
 
             _hostApplicationLifetime.StopApplication();
 
+            return;
+        }
+
+        if (!ValidateOptions())
+        {
             return;
         }
 
@@ -56,6 +63,22 @@ public class CocotteService : BackgroundService
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
+    private bool ValidateOptions()
+    {
+        // Validate group options
+        if ((_groupOptions.HelperRoleId
+            | _groupOptions.DpsRoleId
+            | _groupOptions.TankRoleId
+            | _groupOptions.HealerRoleId) == 0)
+        {
+            _logger.LogError("One of the group options id is invalid, it cannot be 0");
+
+            return false;
+        }
+
+        return true;
+    }
+
     private async Task ClientOnReady()
     {
         // Context & Slash commands can be automatically registered, but this process needs to happen after the client enters the READY state.
@@ -63,7 +86,7 @@ public class CocotteService : BackgroundService
         if (_hostEnvironment.IsDevelopment())
         {
             // Check that a dev guild is set
-            if (!_options.DevGuildId.HasValue)
+            if (!_options.DevGuildId.HasValue && _options.DevGuildId!.Value != 0)
             {
                 _logger.LogError("Couldn't find any dev guild while application is run in dev mode, exiting...");
 

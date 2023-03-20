@@ -5,7 +5,8 @@
       "dotnetRunMessages": true,
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
-      }
+      },
+      "workingDirectory": "bin/Debug/net7.0"
     }
   }
 }
