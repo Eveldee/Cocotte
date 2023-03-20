@@ -1,3 +1,4 @@
+using Cocotte.Modules.Activity;
 using Cocotte.Modules.Raids;
 using Cocotte.Options;
 using Cocotte.Services;
@@ -10,20 +11,20 @@ DiscordSocketConfig discordSocketConfig = new()
 {
     LogLevel = LogSeverity.Debug,
     MessageCacheSize = 200,
-    GatewayIntents = GatewayIntents.None
+    GatewayIntents = GatewayIntents.AllUnprivileged
 };
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((_, configuration) =>
     {
         configuration.AddJsonFile("discord.json", false, false);
-        configuration.AddJsonFile("groups.json", false, false);
+        configuration.AddJsonFile("activity.json", false, false);
     })
     .ConfigureServices((context, services) =>
     {
         // Options
         services.Configure<DiscordOptions>(context.Configuration.GetSection(DiscordOptions.SectionName));
-        services.Configure<GroupsOptions>(context.Configuration.GetSection(GroupsOptions.SectionName));
+        services.Configure<ActivityOptions>(context.Configuration.GetSection(ActivityOptions.SectionName));
 
         // Discord.Net
         services.AddHostedService<DiscordLoggingService>();
@@ -41,6 +42,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<RolesOptions>();
 
         // Groups
+        services.AddTransient<ActivityFormatter>();
+        services.AddSingleton<ActivityHelper>();
 
         // Raids
         services.AddTransient<RaidFormatter>();

@@ -15,20 +15,20 @@ public class CocotteService : BackgroundService
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
     private readonly DiscordSocketClient _client;
     private readonly DiscordOptions _options;
-    private readonly GroupsOptions _groupOptions;
+    private readonly ActivityOptions _activityOptions;
     private readonly InteractionService _interactionService;
 
     public CocotteService(ILogger<CocotteService> logger, IServiceProvider serviceProvider,
         IHostEnvironment hostEnvironment,
         IHostApplicationLifetime hostApplicationLifetime, DiscordSocketClient client,
-        IOptions<DiscordOptions> options, IOptions<GroupsOptions> groupOptions, InteractionService interactionService)
+        IOptions<DiscordOptions> options, IOptions<ActivityOptions> groupOptions, InteractionService interactionService)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
         _hostApplicationLifetime = hostApplicationLifetime;
         _client = client;
         _options = options.Value;
-        _groupOptions = groupOptions.Value;
+        _activityOptions = groupOptions.Value;
         _interactionService = interactionService;
         _hostEnvironment = hostEnvironment;
     }
@@ -66,10 +66,10 @@ public class CocotteService : BackgroundService
     private bool ValidateOptions()
     {
         // Validate group options
-        if ((_groupOptions.HelperRoleId
-            | _groupOptions.DpsRoleId
-            | _groupOptions.TankRoleId
-            | _groupOptions.HealerRoleId) == 0)
+        if ((_activityOptions.HelperRoleId
+            | _activityOptions.DpsRoleId
+            | _activityOptions.TankRoleId
+            | _activityOptions.SupportRoleId) == 0)
         {
             _logger.LogError("One of the group options id is invalid, it cannot be 0");
 

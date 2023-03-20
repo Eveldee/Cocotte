@@ -1,5 +1,5 @@
 ﻿{
-	"GroupsOptions": {
+	"ActivityOptions": {
 		"HelperRoleId": 0,
 		"HelperEmote": "",
 
@@ -9,7 +9,7 @@
 		"TankRoleId": 0,
 		"TankEmote": "",
 
-		"HealerRoleId": 0,
-		"HealerEmote": ""
+		"SupportRoleId": 0,
+		"SupportEmote": ""
 	}
 }
