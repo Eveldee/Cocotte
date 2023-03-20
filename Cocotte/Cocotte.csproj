@@ -9,6 +9,18 @@
 
     <ItemGroup>
         <PackageReference Include="Discord.Net" Version="3.9.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.4" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="cocotte.db" />
+      <Content Include="cocotte.db">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 </Project>
