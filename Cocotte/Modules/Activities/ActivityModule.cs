@@ -14,7 +14,7 @@ namespace Cocotte.Modules.Activities;
 /// </summary>
 [Group("activite", "Organise des activités")]
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
-public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
+public partial class ActivityModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger<ActivityModule> _logger;
     private readonly ActivityOptions _options;
@@ -124,6 +124,17 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
             await RespondAsync(
                 ephemeral: true,
                 embed: EmbedUtils.ErrorEmbed("Vous êtes déjà inscrit à cette activité").Build()
+            );
+
+            return;
+        }
+
+        // Check if activity is full
+        if (await _activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("L'activité est complète").Build()
             );
 
             return;

@@ -63,7 +63,7 @@ public class ActivityFormatter
 
     public string FormatActivityPlayer(ActivityPlayer player) => player switch
     {
-        ActivityRolePlayer rolePlayer => $"{player.Name} {RolesToEmotes(rolePlayer.Roles)}",
+        ActivityRolePlayer rolePlayer => $"{player.Name} - {RolesToEmotes(rolePlayer.Roles)}",
         _ => $"{player.Name})"
     };
 
@@ -73,22 +73,22 @@ public class ActivityFormatter
 
         if (rolePlayerRoles.HasFlag(ActivityRoles.Helper))
         {
-            emotesBuilder.Append($"{_options.HelperEmote}/");
+            emotesBuilder.Append($" {_options.HelperEmote} ");
         }
 
         if (rolePlayerRoles.HasFlag(ActivityRoles.Dps))
         {
-            emotesBuilder.Append(_options.DpsEmote);
+            emotesBuilder.Append($" {_options.DpsEmote} ");
         }
 
         if (rolePlayerRoles.HasFlag(ActivityRoles.Tank))
         {
-            emotesBuilder.Append(_options.TankEmote);
+            emotesBuilder.Append($" {_options.TankEmote} ");
         }
 
         if (rolePlayerRoles.HasFlag(ActivityRoles.Support))
         {
-            emotesBuilder.Append(_options.SupportEmote);
+            emotesBuilder.Append($" {_options.SupportEmote} ");
         }
 
         return emotesBuilder.ToString();

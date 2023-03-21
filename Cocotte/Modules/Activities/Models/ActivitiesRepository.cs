@@ -1,4 +1,5 @@
 ﻿using Cocotte.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cocotte.Modules.Activities.Models;
 
@@ -30,6 +31,9 @@ public class ActivitiesRepository
     {
         return await _cocotteDbContext.ActivityRolePlayers.FindAsync(activityId, playerId);
     }
+
+    public async Task<int> ActivityPlayerCount(Activity activity) =>
+        await _cocotteDbContext.ActivityPlayers.Where(player => player.ActivityId == activity.ActivityId).CountAsync();
 
     public async Task<IEnumerable<ActivityPlayer>> LoadActivityPlayers(Activity activity)
     {
