@@ -1,4 +1,4 @@
-﻿namespace Cocotte.Modules.Activity;
+﻿namespace Cocotte.Modules.Activities;
 
 public enum ActivityName
 {

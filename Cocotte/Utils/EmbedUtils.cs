@@ -4,7 +4,7 @@ namespace Cocotte.Utils;
 
 public static class EmbedUtils
 {
-    public static EmbedBuilder ErrorEmbed(string message, string title = "Error")
+    public static EmbedBuilder ErrorEmbed(string message, string title = "Erreur")
     {
         return new EmbedBuilder()
             .WithColor(Colors.ErrorColor)
@@ -25,8 +25,8 @@ public static class EmbedUtils
             )
             .WithDescription(message);
     }
-    
-    public static EmbedBuilder SuccessEmbed(string message, string title = "Success")
+
+    public static EmbedBuilder SuccessEmbed(string message, string title = "Succès")
     {
         return new EmbedBuilder()
             .WithColor(Colors.SuccessColor)
@@ -36,8 +36,8 @@ public static class EmbedUtils
             )
             .WithDescription(message);
     }
-    
-    public static EmbedBuilder WarningEmbed(string message, string title = "Warning")
+
+    public static EmbedBuilder WarningEmbed(string message, string title = "Attention")
     {
         return new EmbedBuilder()
             .WithColor(Colors.WarningColor)

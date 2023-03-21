@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Cocotte.Modules.Activity.Models;
+using Cocotte.Modules.Activities.Models;
 using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
@@ -7,7 +7,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 
-namespace Cocotte.Modules.Activity;
+namespace Cocotte.Modules.Activities;
 
 /// <summary>
 /// Module to ask and propose groups for different activities: Abyss, OOW, FC, ...
@@ -20,12 +20,14 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
     private readonly ActivityOptions _options;
     private readonly ActivityHelper _activityHelper;
     private readonly ActivitiesRepository _activitiesRepository;
+    private readonly ActivityFormatter _activityFormatter;
 
-    public ActivityModule(ILogger<ActivityModule> logger, IOptions<ActivityOptions> options, ActivityHelper activityHelper, ActivitiesRepository activitiesRepository)
+    public ActivityModule(ILogger<ActivityModule> logger, IOptions<ActivityOptions> options, ActivityHelper activityHelper, ActivitiesRepository activitiesRepository, ActivityFormatter activityFormatter)
     {
         _logger = logger;
         _activityHelper = activityHelper;
         _activitiesRepository = activitiesRepository;
+        _activityFormatter = activityFormatter;
         _options = options.Value;
     }
 
@@ -41,7 +43,7 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
         """);
     }
 
-    [SlashCommand("abyss", "Créer un groupe pour l'Abîme du Néant")]
+    [SlashCommand("abime", "Créer un groupe pour l'Abîme du Néant")]
     public async Task ActivityAbyss([Summary("étage", "A quel étage êtes vous")] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         const ActivityName activityName = ActivityName.Abyss;
@@ -51,30 +53,43 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
         var activity = new StagedActivity
         {
             ActivityId = 0,
-            CreatorId = Context.User.Id,
+            CreatorDiscordId = Context.User.Id,
+            CreatorDiscordName = ((SocketGuildUser)Context.User).DisplayName,
             Description = description,
-            ActivityType = activityType,
-            ActivityName = activityName,
+            Type = activityType,
+            Name = activityName,
             MaxPlayers = maxPlayers,
-            Stage = stage,
-            ActivityPlayers = new()
+            Stage = stage
         };
 
         await CreateRoleActivity(activity);
     }
 
-    private async Task CreateRoleActivity(Models.Activity activity)
+    private async Task CreateRoleActivity(Activity activity)
     {
-        _logger.LogTrace("Creating activity {Activity}", activity);
+        var user = (SocketGuildUser)Context.User;
+        _logger.LogTrace("{User} is creating activity {Activity}", user.DisplayName, activity);
 
         // Activities are identified using their original message id
-        await RespondAsync("`Création de l'activité en cours...`");
+        await RespondAsync("> *Création de l'activité en cours...*");
 
         var response = await GetOriginalResponseAsync();
         activity.ActivityId = response.Id;
 
         // Add activity to db
         await _activitiesRepository.AddActivity(activity);
+
+        // Add creator to activity
+        var rolePlayer = new ActivityRolePlayer
+        {
+            Activity = activity,
+            DiscordId = user.Id,
+            Name = user.DisplayName,
+            Roles = _activityHelper.GetPlayerRoles(user.Roles)
+        };
+
+        activity.ActivityPlayers.Add(rolePlayer);
+        await _activitiesRepository.SaveChanges();
 
         // Add components
         var components = ActivityRoleComponent(activity.ActivityId);
@@ -83,7 +98,7 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
         {
             m.Content = "";
             m.Components = components.Build();
-            // m.Embed = embed.Build();
+            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1)).Build();
         });
     }
 
@@ -117,11 +132,20 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
         _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, activityId);
 
         var roles = _activityHelper.GetPlayerRoles(user.Roles);
-        var activityRolePlayer = new ActivityRolePlayer { UserId = user.Id, PlayerName = user.DisplayName, Roles = roles, ActivityId = activityId, Activity = activity };
+        var activityRolePlayer = new ActivityRolePlayer
+        {
+            Activity = activity,
+            DiscordId = user.Id,
+            Name = user.DisplayName,
+            Roles = roles
+        };
 
         // Add player to activity
         activity.ActivityPlayers.Add(activityRolePlayer);
         await _activitiesRepository.SaveChanges();
+
+        // Update activity embed
+        await UpdateActivityEmbed(activity);
 
         await RespondAsync(
             ephemeral: true,
@@ -161,18 +185,40 @@ public class ActivityModule : InteractionModuleBase<SocketInteractionContext>
         activity.ActivityPlayers.Remove(activityPlayer);
         await _activitiesRepository.SaveChanges();
 
+        // Update activity embed
+        await UpdateActivityEmbed(activity);
+
         await RespondAsync(
             ephemeral: true,
             embed: EmbedUtils.SuccessEmbed("Vous avez bien été désinscrit pour cette activité").Build()
         );
     }
 
-    [ComponentInteraction("activity event_join:*", ignoreGroupNames: true)]
-    private async Task JoinEventActivity(ulong activityId)
-    {
-        _logger.LogTrace("Player {Player} joined activity {Id}", ((IGuildUser)Context.User).DisplayName, activityId);
+    // [ComponentInteraction("activity event_join:*", ignoreGroupNames: true)]
+    // private async Task JoinEventActivity(ulong activityId)
+    // {
+    //     _logger.LogTrace("Player {Player} joined activity {Id}", ((IGuildUser)Context.User).DisplayName, activityId);
+    //
+    //     await RespondAsync(activityId.ToString());
+    // }
 
-        await RespondAsync(activityId.ToString());
+    private async Task UpdateActivityEmbed(Activity activity)
+    {
+        // Get channel
+        var channel = await Context.Interaction.GetChannelAsync();
+
+        if (channel is null)
+        {
+            return;
+        }
+
+        // Fetch players
+        var players = await _activitiesRepository.LoadActivityPlayers(activity);
+
+        await channel.ModifyMessageAsync(activity.ActivityId, properties =>
+        {
+            properties.Embed = _activityFormatter.ActivityEmbed(activity, players).Build();
+        });
     }
 
     private static ComponentBuilder ActivityRoleComponent(ulong activityId)

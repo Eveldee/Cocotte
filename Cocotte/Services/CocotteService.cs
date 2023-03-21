@@ -1,4 +1,5 @@
 using System.Reflection;
+using Cocotte.Modules.Activities;
 using Cocotte.Options;
 using Discord;
 using Discord.Interactions;
@@ -51,7 +52,11 @@ public class CocotteService : BackgroundService
         }
 
         // Initialize modules and commands
-        await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
+        // await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
+        #if DEBUG
+        await _interactionService.AddModuleAsync(typeof(Modules.Ping.PingModule), _serviceProvider);
+        #endif
+        await _interactionService.AddModuleAsync(typeof(ActivityModule), _serviceProvider);
 
         _client.Ready += ClientOnReady;
         _client.InteractionCreated += HandleInteraction;

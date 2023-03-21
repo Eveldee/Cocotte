@@ -2,7 +2,7 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 
-namespace Cocotte.Modules.Activity;
+namespace Cocotte.Modules.Activities;
 
 public class ActivityHelper
 {
@@ -15,28 +15,20 @@ public class ActivityHelper
         _options = options.Value;
     }
 
-    public ActivityRoles GetPlayerRoles(IReadOnlyCollection<SocketRole> userRoles)
+    public ActivityRoles GetPlayerRoles(IEnumerable<SocketRole> userRoles)
     {
         var roles = ActivityRoles.None;
 
         foreach (var socketRole in userRoles)
         {
-            if (socketRole.Id == _options.HelperRoleId)
+            roles |= socketRole.Id switch
             {
-                roles |= ActivityRoles.Helper;
-            }
-            else if (socketRole.Id == _options.DpsRoleId)
-            {
-                roles |= ActivityRoles.Dps;
-            }
-            else if (socketRole.Id == _options.TankRoleId)
-            {
-                roles |= ActivityRoles.Tank;
-            }
-            else if (socketRole.Id == _options.SupportRoleId)
-            {
-                roles |= ActivityRoles.Support;
-            }
+                var role when role == _options.HelperRoleId => ActivityRoles.Helper,
+                var role when role == _options.DpsRoleId => ActivityRoles.Dps,
+                var role when role == _options.TankRoleId => ActivityRoles.Tank,
+                var role when role == _options.SupportRoleId => ActivityRoles.Support,
+                _ => ActivityRoles.None
+            };
         }
 
         return roles;

@@ -1,4 +1,4 @@
-﻿namespace Cocotte.Modules.Activity;
+﻿namespace Cocotte.Modules.Activities;
 
 [Flags]
 public enum ActivityRoles : byte

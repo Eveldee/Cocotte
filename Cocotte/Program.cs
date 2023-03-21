@@ -1,5 +1,5 @@
-using Cocotte.Modules.Activity;
-using Cocotte.Modules.Activity.Models;
+using Cocotte.Modules.Activities;
+using Cocotte.Modules.Activities.Models;
 using Cocotte.Modules.Raids;
 using Cocotte.Options;
 using Cocotte.Services;
@@ -13,7 +13,7 @@ DiscordSocketConfig discordSocketConfig = new()
 {
     LogLevel = LogSeverity.Debug,
     MessageCacheSize = 200,
-    GatewayIntents = GatewayIntents.AllUnprivileged
+    GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.Guilds
 };
 
 IHost host = Host.CreateDefaultBuilder(args)
@@ -29,7 +29,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.Configure<ActivityOptions>(context.Configuration.GetSection(ActivityOptions.SectionName));
 
         // Database
-        services.AddDbContext<CocotteContext>(options =>
+        services.AddDbContext<CocotteDbContext>(options =>
             options.UseSqlite(context.Configuration.GetConnectionString("CocotteContext")), ServiceLifetime.Transient, ServiceLifetime.Transient);
         services.AddTransient<ActivitiesRepository>();
 
@@ -62,5 +62,18 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddTransient<TransientCounter>();
     })
     .Build();
+
+// Recreate database if in development environment
+await using(var scope = host.Services.CreateAsyncScope())
+{
+    var hostEnvironment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+
+    if (hostEnvironment.IsDevelopment())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<CocotteDbContext>();
+        // await dbContext.Database.EnsureDeletedAsync();
+        await dbContext.Database.EnsureCreatedAsync();
+    }
+}
 
 await host.RunAsync();

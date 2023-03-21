@@ -7,6 +7,14 @@
         "DOTNET_ENVIRONMENT": "Development"
       },
       "workingDirectory": "bin/Debug/net7.0"
+    },
+    "Cocotte-Prod": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Production"
+      },
+      "workingDirectory": "bin/Debug/net7.0"
     }
   }
 }
