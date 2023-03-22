@@ -35,7 +35,7 @@ public class ActivitiesRepository
     public async Task<int> ActivityPlayerCount(Activity activity) =>
         await _cocotteDbContext.ActivityPlayers.Where(player => player.ActivityId == activity.ActivityId).CountAsync();
 
-    public async Task<IEnumerable<ActivityPlayer>> LoadActivityPlayers(Activity activity)
+    public async Task<IReadOnlyCollection<ActivityPlayer>> LoadActivityPlayers(Activity activity)
     {
         await _cocotteDbContext
             .Entry(activity)

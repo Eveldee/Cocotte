@@ -24,7 +24,7 @@ public class ActivityFormatter
             ActivityName.Raids => "Raids",
             ActivityName.FrontierClash => "Conflit Frontalier",
             ActivityName.VoidRift => "Failles du Néant",
-            ActivityName.OriginsOfWar => "Origines de la Guerre",
+            ActivityName.OriginsOfWar => "Origine de la Guerre",
             ActivityName.JointOperation => "Opération Conjointe",
             ActivityName.InterstellarExploration => "Exploration Interstellaire",
             ActivityName.BreakFromDestiny => "Échapper au Destin (3v3)",
@@ -36,29 +36,45 @@ public class ActivityFormatter
         };
     }
 
-    public EmbedBuilder ActivityEmbed(Activity activity, IEnumerable<ActivityPlayer> players)
+    public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
-        // Get activity emote
-        var activityEmote = GetActivityEmote(activity.Name);
-
         // Players field
         var playersField = new EmbedFieldBuilder()
             .WithName("Joueurs inscrits")
             .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", players.Select(FormatActivityPlayer)))}");
 
+        var title = activity switch
+        {
+            StagedActivity stagedActivity =>
+                $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers}) - Étage {stagedActivity.Stage}",
+            _ => $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
+        };
+
+        string bannerUrl = $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activity.Name)}.webp";
+
         return new EmbedBuilder()
             .WithColor(Colors.CocotteBlue)
-            .WithTitle($"{activityEmote} {FormatActivityName(activity.Name)} ({players.Count()}/{activity.MaxPlayers})")
+            .WithTitle(title)
             .WithDescription($"{activity.Description}")
+            .WithImageUrl(bannerUrl)
             .WithFields(playersField);
     }
 
-    private static string GetActivityEmote(ActivityName activityName) => activityName switch
+    private static string GetActivityCode(ActivityName activityName) => activityName switch
     {
-        ActivityName.Abyss => ":fox:",
-        ActivityName.Raids => ":crossed_swords:",
-        ActivityName.Fishing => ":fishing_pole_and_fish:",
-        _ => ":white_circle:"
+        ActivityName.Abyss => "VA",
+        ActivityName.OriginsOfWar => "OOW",
+        ActivityName.Raids => "RD",
+        ActivityName.FrontierClash => "FC",
+        ActivityName.VoidRift => "VR",
+        ActivityName.JointOperation => "JO",
+        ActivityName.InterstellarExploration => "IE",
+        ActivityName.BreakFromDestiny => "BR",
+        ActivityName.CriticalAbyss => "CA",
+        ActivityName.Fishing => "FI",
+        ActivityName.Event => "EV",
+        ActivityName.MirroriaRace => "MR",
+        _ => "NA"
     };
 
     public string FormatActivityPlayer(ActivityPlayer player) => player switch

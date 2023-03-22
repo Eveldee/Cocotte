@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using Cocotte.Modules.Activities.Models;
 using Cocotte.Options;
 using Cocotte.Utils;
@@ -46,7 +47,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     [SlashCommand("abime", "Créer un groupe pour l'Abîme du Néant")]
     public async Task ActivityAbyss([Summary("étage", "A quel étage êtes vous")] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        const ActivityName activityName = ActivityName.Abyss;
+        const ActivityName activityName = ActivityName.OriginsOfWar;
         var activityType = ActivityHelper.ActivityNameToType(activityName);
         var maxPlayers = ActivityHelper.ActivityTypeToMaxPlayers(activityType);
 
@@ -98,7 +99,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         {
             m.Content = "";
             m.Components = components.Build();
-            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1)).Build();
+            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList()).Build();
         });
     }
 

@@ -324,7 +324,7 @@ public class FoodModal : IModal
     [RequiredInput(false)]
     [InputLabel("Why??")]
     [ModalTextInput("food_reason", TextInputStyle.Paragraph, "Kuz it's tasty", maxLength: 500)]
-    public string Reason { get; set; }
+    public required string Reason { get; set; }
 }
 
 
