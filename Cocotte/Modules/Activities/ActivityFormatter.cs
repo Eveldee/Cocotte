@@ -22,13 +22,13 @@ public class ActivityFormatter
         {
             ActivityName.Abyss => "Abîme du Néant",
             ActivityName.Raids => "Raids",
-            ActivityName.FrontierClash => "Conflit Frontalier",
-            ActivityName.VoidRift => "Failles du Néant",
-            ActivityName.OriginsOfWar => "Origine de la Guerre",
-            ActivityName.JointOperation => "Opération Conjointe",
-            ActivityName.InterstellarExploration => "Exploration Interstellaire",
-            ActivityName.BreakFromDestiny => "Échapper au Destin (3v3)",
-            ActivityName.CriticalAbyss => "Abîme Critique (8v8)",
+            ActivityName.FrontierClash => "Conflit frontalier",
+            ActivityName.VoidRift => "Failles du néant",
+            ActivityName.OriginsOfWar => "Origine de la guerre",
+            ActivityName.JointOperation => "Opération conjointe",
+            ActivityName.InterstellarExploration => "Exploration interstellaire",
+            ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
+            ActivityName.CriticalAbyss => "Abîme critique (8v8)",
             ActivityName.Event => "Event",
             ActivityName.Fishing => "Pêche",
             ActivityName.MirroriaRace => "Course Mirroria",
@@ -38,10 +38,13 @@ public class ActivityFormatter
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
+        // Compute padding using player with longest name
+        var namePadding = players.Count > 0 ? players.Max(p => p.Name.Length) : 0;
+
         // Players field
         var playersField = new EmbedFieldBuilder()
             .WithName("Joueurs inscrits")
-            .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", players.Select(FormatActivityPlayer)))}");
+            .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n\n", players.Select(p => FormatActivityPlayer(p, namePadding))))}");
 
         var title = activity switch
         {
@@ -50,12 +53,16 @@ public class ActivityFormatter
             _ => $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
         };
 
+        string description = string.IsNullOrWhiteSpace(activity.Description)
+            ? $"Rejoignez l'activité de {MentionUtils.MentionUser(activity.CreatorDiscordId)}"
+            : activity.Description;
+
         string bannerUrl = $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activity.Name)}.webp";
 
         return new EmbedBuilder()
             .WithColor(Colors.CocotteBlue)
             .WithTitle(title)
-            .WithDescription($"{activity.Description}")
+            .WithDescription(description)
             .WithImageUrl(bannerUrl)
             .WithFields(playersField);
     }
@@ -65,7 +72,7 @@ public class ActivityFormatter
         ActivityName.Abyss => "VA",
         ActivityName.OriginsOfWar => "OOW",
         ActivityName.Raids => "RD",
-        ActivityName.FrontierClash => "FC",
+        ActivityName.FrontierClash => "FCH",
         ActivityName.VoidRift => "VR",
         ActivityName.JointOperation => "JO",
         ActivityName.InterstellarExploration => "IE",
@@ -77,9 +84,9 @@ public class ActivityFormatter
         _ => "NA"
     };
 
-    public string FormatActivityPlayer(ActivityPlayer player) => player switch
+    public string FormatActivityPlayer(ActivityPlayer player, int namePadding) => player switch
     {
-        ActivityRolePlayer rolePlayer => $"{player.Name} - {RolesToEmotes(rolePlayer.Roles)}",
+        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **―** {RolesToEmotes(rolePlayer.Roles)}",
         _ => $"{player.Name})"
     };
 

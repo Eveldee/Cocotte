@@ -45,9 +45,9 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     }
 
     [SlashCommand("abime", "Créer un groupe pour l'Abîme du Néant")]
-    public async Task ActivityAbyss([Summary("étage", "A quel étage êtes vous")] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityAbyss([Summary("étage", "A quel étage êtes vous")] [MinValue(1), MaxValue(6)] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        const ActivityName activityName = ActivityName.OriginsOfWar;
+        const ActivityName activityName = ActivityName.Abyss;
         var activityType = ActivityHelper.ActivityNameToType(activityName);
         var maxPlayers = ActivityHelper.ActivityTypeToMaxPlayers(activityType);
 
@@ -59,6 +59,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             Description = description,
             Type = activityType,
             Name = activityName,
+            RoleEnabled = true,
             MaxPlayers = maxPlayers,
             Stage = stage
         };
@@ -103,8 +104,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         });
     }
 
-    [ComponentInteraction("activity join_role:*", ignoreGroupNames: true)]
-    private async Task JoinActivityRole(ulong activityId)
+    [ComponentInteraction("activity join:*", ignoreGroupNames: true)]
+    private async Task JoinActivity(ulong activityId)
     {
         var user = (SocketGuildUser)Context.User;
 
@@ -120,7 +121,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // If player is already registered
-        if (await _activitiesRepository.FindActivityRolePlayer(activityId, user.Id) is not null)
+        if (await _activitiesRepository.FindActivityPlayer(activityId, user.Id) is not null)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -143,17 +144,21 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
         _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, activityId);
 
-        var roles = _activityHelper.GetPlayerRoles(user.Roles);
-        var activityRolePlayer = new ActivityRolePlayer
+        var activityPlayer = activity.RoleEnabled ? new ActivityRolePlayer
         {
             Activity = activity,
             DiscordId = user.Id,
             Name = user.DisplayName,
-            Roles = roles
+            Roles = _activityHelper.GetPlayerRoles(user.Roles)
+        } : new ActivityPlayer
+        {
+            Activity = activity,
+            DiscordId = user.Id,
+            Name = user.DisplayName
         };
 
         // Add player to activity
-        activity.ActivityPlayers.Add(activityRolePlayer);
+        activity.ActivityPlayers.Add(activityPlayer);
         await _activitiesRepository.SaveChanges();
 
         // Update activity embed
@@ -165,8 +170,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         );
     }
 
-    [ComponentInteraction("activity leave_role:*", ignoreGroupNames: true)]
-    private async Task LeaveActivityRole(ulong activityId)
+    [ComponentInteraction("activity leave:*", ignoreGroupNames: true)]
+    private async Task LeaveActivity(ulong activityId)
     {
         var user = (IGuildUser)Context.User;
 
@@ -206,14 +211,6 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         );
     }
 
-    // [ComponentInteraction("activity event_join:*", ignoreGroupNames: true)]
-    // private async Task JoinEventActivity(ulong activityId)
-    // {
-    //     _logger.LogTrace("Player {Player} joined activity {Id}", ((IGuildUser)Context.User).DisplayName, activityId);
-    //
-    //     await RespondAsync(activityId.ToString());
-    // }
-
     private async Task UpdateActivityEmbed(Activity activity)
     {
         // Get channel
@@ -239,13 +236,15 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             .AddRow(new ActionRowBuilder()
                 .WithButton(new ButtonBuilder()
                     .WithLabel("Rejoindre l'activité")
-                    .WithCustomId($"activity join_role:{activityId}")
+                    .WithCustomId($"activity join:{activityId}")
+                    .WithEmote(":white_check_mark:".ToEmote())
                     .WithStyle(ButtonStyle.Primary)
                 )
                 .WithButton(new ButtonBuilder()
                     .WithLabel("Se désinscrire de l'activité")
-                    .WithCustomId($"activity leave_role:{activityId}")
-                    .WithStyle(ButtonStyle.Danger)
+                    .WithCustomId($"activity leave:{activityId}")
+                    .WithEmote(":x:".ToEmote())
+                    .WithStyle(ButtonStyle.Secondary)
                 )
             );
     }

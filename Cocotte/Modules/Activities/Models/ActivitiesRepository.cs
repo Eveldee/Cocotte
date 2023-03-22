@@ -17,19 +17,9 @@ public class ActivitiesRepository
         return await _cocotteDbContext.Activities.FindAsync(activityId);
     }
 
-    public async Task<StagedActivity?> FindStagedActivity(ulong activityId)
-    {
-        return await _cocotteDbContext.StagedActivities.FindAsync(activityId);
-    }
-
     public async Task<ActivityPlayer?> FindActivityPlayer(ulong activityId, ulong playerId)
     {
         return await _cocotteDbContext.ActivityPlayers.FindAsync(activityId, playerId);
-    }
-
-    public async Task<ActivityRolePlayer?> FindActivityRolePlayer(ulong activityId, ulong playerId)
-    {
-        return await _cocotteDbContext.ActivityRolePlayers.FindAsync(activityId, playerId);
     }
 
     public async Task<int> ActivityPlayerCount(Activity activity) =>
