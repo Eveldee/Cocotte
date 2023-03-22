@@ -15,19 +15,19 @@ public class ActivityHelper
         _options = options.Value;
     }
 
-    public ActivityRoles GetPlayerRoles(IEnumerable<SocketRole> userRoles)
+    public PlayerRoles GetPlayerRoles(IEnumerable<SocketRole> userRoles)
     {
-        var roles = ActivityRoles.None;
+        var roles = PlayerRoles.None;
 
         foreach (var socketRole in userRoles)
         {
             roles |= socketRole.Id switch
             {
-                var role when role == _options.HelperRoleId => ActivityRoles.Helper,
-                var role when role == _options.DpsRoleId => ActivityRoles.Dps,
-                var role when role == _options.TankRoleId => ActivityRoles.Tank,
-                var role when role == _options.SupportRoleId => ActivityRoles.Support,
-                _ => ActivityRoles.None
+                var role when role == _options.HelperRoleId => PlayerRoles.Helper,
+                var role when role == _options.DpsRoleId => PlayerRoles.Dps,
+                var role when role == _options.TankRoleId => PlayerRoles.Tank,
+                var role when role == _options.SupportRoleId => PlayerRoles.Support,
+                _ => PlayerRoles.None
             };
         }
 
@@ -63,6 +63,7 @@ public class ActivityHelper
         ActivityType.Event4Players => 4,
 
         ActivityType.Pve8Players or
+        ActivityType.Pvp8Players or
         ActivityType.Event8Players => 8,
 
         ActivityType.Pvp3Players => 3,

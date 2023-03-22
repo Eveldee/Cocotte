@@ -2,5 +2,5 @@
 
 public class ActivityRolePlayer : ActivityPlayer
 {
-    public required ActivityRoles Roles { get; init; }
+    public required PlayerRoles Roles { get; init; }
 }

@@ -26,7 +26,7 @@ public class ActivityFormatter
             ActivityName.VoidRift => "Failles du néant",
             ActivityName.OriginsOfWar => "Origine de la guerre",
             ActivityName.JointOperation => "Opération conjointe",
-            ActivityName.InterstellarExploration => "Exploration interstellaire",
+            ActivityName.InterstellarExploration => "Portes interstellaires",
             ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
             ActivityName.CriticalAbyss => "Abîme critique (8v8)",
             ActivityName.Event => "Event",
@@ -92,29 +92,29 @@ public class ActivityFormatter
     public string FormatActivityPlayer(ActivityPlayer player, int namePadding) => player switch
     {
         ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **―** {RolesToEmotes(rolePlayer.Roles)}",
-        _ => $"{player.Name})"
+        _ => $"` {player.Name} `"
     };
 
-    private string RolesToEmotes(ActivityRoles rolePlayerRoles)
+    private string RolesToEmotes(PlayerRoles rolePlayerRoles)
     {
         var emotesBuilder = new StringBuilder();
 
-        if (rolePlayerRoles.HasFlag(ActivityRoles.Helper))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Helper))
         {
             emotesBuilder.Append($" {_options.HelperEmote} ");
         }
 
-        if (rolePlayerRoles.HasFlag(ActivityRoles.Dps))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Dps))
         {
             emotesBuilder.Append($" {_options.DpsEmote} ");
         }
 
-        if (rolePlayerRoles.HasFlag(ActivityRoles.Tank))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Tank))
         {
             emotesBuilder.Append($" {_options.TankEmote} ");
         }
 
-        if (rolePlayerRoles.HasFlag(ActivityRoles.Support))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Support))
         {
             emotesBuilder.Append($" {_options.SupportEmote} ");
         }

@@ -1,7 +1,7 @@
 ﻿namespace Cocotte.Modules.Activities;
 
 [Flags]
-public enum ActivityRoles : byte
+public enum PlayerRoles : byte
 {
     None = 0b0000,
     Helper = 0b0001,

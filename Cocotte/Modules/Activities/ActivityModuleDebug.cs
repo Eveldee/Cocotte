@@ -21,8 +21,8 @@ public partial class ActivityModule
                     Activity = activity,
                     Name = $"Player{Random.Shared.Next(1, 100)}",
                     DiscordId = (ulong) Random.Shared.NextInt64(),
-                    Roles = (ActivityRoles) Random.Shared.Next((int) (ActivityRoles.Dps | ActivityRoles.Helper |
-                                                                      ActivityRoles.Support | ActivityRoles.Tank) + 1)
+                    Roles = (PlayerRoles) Random.Shared.Next((int) (PlayerRoles.Dps | PlayerRoles.Helper |
+                                                                      PlayerRoles.Support | PlayerRoles.Tank) + 1)
                 };
 
                 // Add the player to the activity

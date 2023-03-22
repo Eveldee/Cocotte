@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Cocotte.Modules.Activities.Models;
 
-public abstract class Activity
+public class Activity
 {
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public required ulong ActivityId { get; set; }
@@ -13,7 +13,7 @@ public abstract class Activity
     public string? Description { get; init; }
     public required ActivityType Type { get; init; }
     public required ActivityName Name { get; init; }
-    public required bool RoleEnabled { get; init; }
+    public required bool AreRolesEnabled { get; init; }
     public required uint MaxPlayers { get; set; }
 
     public List<ActivityPlayer> ActivityPlayers { get; init; } = new();
