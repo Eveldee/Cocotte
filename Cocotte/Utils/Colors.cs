@@ -6,6 +6,8 @@ public static class Colors
 {
     // Main Cocotte colors
     public static Color CocotteBlue => new(0x3196c8);
+    public static Color CocotteRed => new(0xe40808);
+    public static Color CocotteOrange => new(0xff6d01);
 
     // Colors used in embeds
     public static Color ErrorColor => new(0xFB6060);

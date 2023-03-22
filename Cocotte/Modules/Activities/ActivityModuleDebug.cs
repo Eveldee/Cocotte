@@ -29,7 +29,7 @@ public partial class ActivityModule
                 activity.ActivityPlayers.Add(player);
                 await _activitiesRepository.SaveChanges();
 
-                await UpdateActivityEmbed(activity);
+                await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
             }
         }
 

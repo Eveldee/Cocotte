@@ -38,13 +38,16 @@ public class ActivityFormatter
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
+        // Activity full
+        bool activityFull = players.Count >= activity.MaxPlayers;
+
         // Compute padding using player with longest name
         var namePadding = players.Count > 0 ? players.Max(p => p.Name.Length) : 0;
 
         // Players field
         var playersField = new EmbedFieldBuilder()
             .WithName("Joueurs inscrits")
-            .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n\n", players.Select(p => FormatActivityPlayer(p, namePadding))))}");
+            .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", players.Select(p => FormatActivityPlayer(p, namePadding))))}");
 
         var title = activity switch
         {
@@ -59,8 +62,10 @@ public class ActivityFormatter
 
         string bannerUrl = $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activity.Name)}.webp";
 
+        var color = activityFull ? Colors.CocotteOrange : Colors.CocotteBlue;
+
         return new EmbedBuilder()
-            .WithColor(Colors.CocotteBlue)
+            .WithColor(color)
             .WithTitle(title)
             .WithDescription(description)
             .WithImageUrl(bannerUrl)

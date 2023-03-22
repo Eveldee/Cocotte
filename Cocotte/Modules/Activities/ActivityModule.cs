@@ -94,7 +94,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.SaveChanges();
 
         // Add components
-        var components = ActivityRoleComponent(activity.ActivityId);
+        var components = ActivityComponents(activity.ActivityId);
 
         await ModifyOriginalResponseAsync(m =>
         {
@@ -162,7 +162,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.SaveChanges();
 
         // Update activity embed
-        await UpdateActivityEmbed(activity);
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
 
         await RespondAsync(
             ephemeral: true,
@@ -203,7 +203,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.SaveChanges();
 
         // Update activity embed
-        await UpdateActivityEmbed(activity);
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerLeave);
 
         await RespondAsync(
             ephemeral: true,
@@ -211,7 +211,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         );
     }
 
-    private async Task UpdateActivityEmbed(Activity activity)
+    private async Task UpdateActivityEmbed(Activity activity, ActivityUpdateReason updateReason)
     {
         // Get channel
         var channel = await Context.Interaction.GetChannelAsync();
@@ -227,10 +227,19 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await channel.ModifyMessageAsync(activity.ActivityId, properties =>
         {
             properties.Embed = _activityFormatter.ActivityEmbed(activity, players).Build();
+
+            // Disable join button if the activity is full on join, enable it on leave if activity is not full anymore
+            var isActivityFull = players.Count >= activity.MaxPlayers;
+            properties.Components = updateReason switch
+            {
+                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.ActivityId, disabled: true).Build(),
+                ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.ActivityId, disabled: false).Build(),
+                _ => Optional<MessageComponent>.Unspecified
+            };
         });
     }
 
-    private static ComponentBuilder ActivityRoleComponent(ulong activityId)
+    private static ComponentBuilder ActivityComponents(ulong activityId, bool disabled = false)
     {
         return new ComponentBuilder()
             .AddRow(new ActionRowBuilder()
@@ -239,6 +248,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                     .WithCustomId($"activity join:{activityId}")
                     .WithEmote(":white_check_mark:".ToEmote())
                     .WithStyle(ButtonStyle.Primary)
+                    .WithDisabled(disabled)
                 )
                 .WithButton(new ButtonBuilder()
                     .WithLabel("Se désinscrire de l'activité")
