@@ -48,9 +48,10 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<IPlayerInfosRepository, MemoryPlayerInfosRepository>();
         services.AddSingleton<RolesOptions>();
 
-        // Groups
+        // Activities
         services.AddTransient<ActivityFormatter>();
-        services.AddSingleton<ActivityHelper>();
+        services.AddTransient<InterstellarFormatter>();
+        services.AddTransient<ActivityHelper>();
 
         // Raids
         services.AddTransient<RaidFormatter>();

@@ -10,9 +10,11 @@ namespace Cocotte.Modules.Activities;
 public class ActivityFormatter
 {
     private readonly ActivityOptions _options;
+    private readonly InterstellarFormatter _interstellarFormatter;
 
-    public ActivityFormatter(IOptions<ActivityOptions> options)
+    public ActivityFormatter(IOptions<ActivityOptions> options, InterstellarFormatter interstellarFormatter)
     {
+        _interstellarFormatter = interstellarFormatter;
         _options = options.Value;
     }
 
@@ -26,7 +28,7 @@ public class ActivityFormatter
             ActivityName.VoidRift => "Failles du néant",
             ActivityName.OriginsOfWar => "Origine de la guerre",
             ActivityName.JointOperation => "Opération conjointe",
-            ActivityName.InterstellarExploration => "Portes interstellaires",
+            ActivityName.InterstellarExploration => "Porte interstellaire",
             ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
             ActivityName.CriticalAbyss => "Abîme critique (8v8)",
             ActivityName.Event => "Event",
@@ -34,6 +36,11 @@ public class ActivityFormatter
             ActivityName.MirroriaRace => "Course Mirroria",
             _ => throw new ArgumentOutOfRangeException(nameof(activityName), activityName, null)
         };
+    }
+
+    public static string GetActivityBanner(ActivityName activityName)
+    {
+        return $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activityName)}.webp";
     }
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
@@ -53,23 +60,34 @@ public class ActivityFormatter
         {
             StagedActivity stagedActivity =>
                 $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers}) - Étage {stagedActivity.Stage}",
-            _ => $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
+            InterstellarActivity interstellar =>
+                $"{FormatActivityName(activity.Name)} {_interstellarFormatter.FormatInterstellarColor(interstellar.Color)} ({players.Count}/{activity.MaxPlayers})",
+            _ =>
+                $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
         };
 
         string description = string.IsNullOrWhiteSpace(activity.Description)
             ? $"Rejoignez l'activité de {MentionUtils.MentionUser(activity.CreatorDiscordId)}"
             : activity.Description;
 
-        string bannerUrl = $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activity.Name)}.webp";
+        string bannerUrl = GetActivityBanner(activity.Name);
 
         var color = activityFull ? Colors.CocotteOrange : Colors.CocotteBlue;
 
-        return new EmbedBuilder()
+        var builder = new EmbedBuilder()
             .WithColor(color)
             .WithTitle(title)
             .WithDescription(description)
             .WithImageUrl(bannerUrl)
             .WithFields(playersField);
+
+        // Add material for interstellar exploration
+        if (activity is InterstellarActivity interstellarActivity)
+        {
+            builder.WithThumbnailUrl(_interstellarFormatter.GetColorIcon(interstellarActivity.Color));
+        }
+
+        return builder;
     }
 
     private static string GetActivityCode(ActivityName activityName) => activityName switch
