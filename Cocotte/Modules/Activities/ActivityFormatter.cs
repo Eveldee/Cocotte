@@ -40,7 +40,7 @@ public class ActivityFormatter
 
     public static string GetActivityBanner(ActivityName activityName)
     {
-        return $"https://sage.cdn.ilysix.fr/assets/Cocotte/banner/{GetActivityCode(activityName)}.webp";
+        return CdnUtils.GetAsset($"banner/{GetActivityCode(activityName)}.webp");
     }
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)

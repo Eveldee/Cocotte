@@ -10,7 +10,7 @@ public static class EmbedUtils
             .WithColor(Colors.ErrorColor)
             .WithAuthor(a => a
                 .WithName(title)
-                .WithIconUrl("https://sage.cdn.ilysix.fr/assets/Cocotte/icons/error.webp")
+                .WithIconUrl(CdnUtils.GetAsset("icons/error.webp"))
             )
             .WithDescription(message);
     }
@@ -21,7 +21,7 @@ public static class EmbedUtils
             .WithColor(Colors.InfoColor)
             .WithAuthor(a => a
                 .WithName(title)
-                .WithIconUrl("https://sage.cdn.ilysix.fr/assets/Cocotte/icons/info.webp")
+                .WithIconUrl(CdnUtils.GetAsset("icons/info.webp"))
             )
             .WithDescription(message);
     }
@@ -32,7 +32,7 @@ public static class EmbedUtils
             .WithColor(Colors.SuccessColor)
             .WithAuthor(a => a
                 .WithName(title)
-                .WithIconUrl("https://sage.cdn.ilysix.fr/assets/Cocotte/icons/success.webp")
+                .WithIconUrl(CdnUtils.GetAsset("icons/success.webp"))
             )
             .WithDescription(message);
     }
@@ -43,7 +43,7 @@ public static class EmbedUtils
             .WithColor(Colors.WarningColor)
             .WithAuthor(a => a
                 .WithName(title)
-                .WithIconUrl("https://sage.cdn.ilysix.fr/assets/Cocotte/icons/warning.webp")
+                .WithIconUrl(CdnUtils.GetAsset("icons/warning.webp"))
             )
             .WithDescription(message);
     }

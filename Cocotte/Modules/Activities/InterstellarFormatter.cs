@@ -1,4 +1,5 @@
 ﻿using Cocotte.Modules.Activities.Models;
+using Cocotte.Utils;
 
 namespace Cocotte.Modules.Activities;
 
@@ -24,7 +25,6 @@ public class InterstellarFormatter
 
     public string GetColorIcon(InterstellarColor color)
     {
-        return
-            $"https://sage.cdn.ilysix.fr/assets/Cocotte/icons/tof/gate/gate_{color.ToString().ToLowerInvariant()}.webp";
+        return CdnUtils.GetAsset($"icons/tof/gate/gate_{color.ToString().ToLowerInvariant()}.webp");
     }
 }
