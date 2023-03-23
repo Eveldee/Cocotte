@@ -12,18 +12,17 @@ public class ActivitiesRepository
         _cocotteDbContext = cocotteDbContext;
     }
 
-    public async Task<Activity?> FindActivity(ulong guildId, ulong activityId)
+    public async Task<Activity?> FindActivity(ulong guildId, ulong channelId, ulong messageId)
     {
-        return await _cocotteDbContext.Activities.FindAsync(guildId, activityId);
+        return await _cocotteDbContext.Activities.FindAsync(guildId, channelId, messageId);
     }
 
-    public async Task<ActivityPlayer?> FindActivityPlayer(ulong guildId, ulong activityId, ulong playerId)
+    public async Task<ActivityPlayer?> FindActivityPlayer(ulong guildId, ulong channelId, ulong messageId, ulong userId)
     {
-        return await _cocotteDbContext.ActivityPlayers.FindAsync(guildId, activityId, playerId);
+        return await _cocotteDbContext.ActivityPlayers.FindAsync(guildId, channelId, messageId, userId);
     }
 
-    public async Task<int> ActivityPlayerCount(Activity activity) =>
-        await _cocotteDbContext.ActivityPlayers.Where(player => player.ActivityId == activity.ActivityId).CountAsync();
+    public int ActivityPlayerCount(Activity activity) => activity.ActivityPlayers.Count;
 
     public async Task<IReadOnlyCollection<ActivityPlayer>> LoadActivityPlayers(Activity activity)
     {
@@ -48,5 +47,18 @@ public class ActivitiesRepository
     public void DeleteActivity(Activity activity)
     {
         _cocotteDbContext.Activities.Remove(activity);
+    }
+
+    public Activity? FindActivityByThreadId(ulong threadId)
+    {
+        return _cocotteDbContext.Activities.FirstOrDefault(activity => activity.ThreadId == threadId);
+    }
+
+    public async Task<bool> ActivityContainsUser(Activity activity, ulong userId)
+    {
+        return await _cocotteDbContext.Entry(activity)
+            .Collection(a => a.ActivityPlayers)
+            .Query()
+            .AnyAsync(p => p.UserId == userId);
     }
 }

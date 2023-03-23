@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cocotte.Modules.Activities.Models;
 
-[PrimaryKey(nameof(GuildId), nameof(ActivityId), nameof(UserId))]
+[PrimaryKey(nameof(GuildId), nameof(ChannelId), nameof(MessageId), nameof(UserId))]
 public class ActivityPlayer
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -12,7 +12,8 @@ public class ActivityPlayer
     public required string Name { get; init; }
 
     public ulong GuildId { get; set; }
-    public ulong ActivityId { get; init; }
+    public ulong ChannelId { get; set; }
+    public ulong MessageId { get; init; }
     public required Activity Activity { get; init; }
 
     public override string ToString()

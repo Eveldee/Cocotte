@@ -24,6 +24,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     private readonly ActivitiesRepository _activitiesRepository;
     private readonly ActivityFormatter _activityFormatter;
 
+    private SocketGuildUser User => (SocketGuildUser) Context.User;
+
     public ActivityModule(ILogger<ActivityModule> logger, IOptions<ActivityOptions> options, ActivityHelper activityHelper, ActivitiesRepository activitiesRepository, ActivityFormatter activityFormatter)
     {
         _logger = logger;
@@ -155,7 +157,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         {
             activity = new StagedActivity
             {
-                ActivityId = response.Id,
+                MessageId = response.Id,
+                ChannelId = Context.Channel.Id,
                 GuildId = Context.Guild.Id,
                 ThreadId = threadId,
                 CreatorUserId = Context.User.Id,
@@ -172,7 +175,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         {
             activity = new InterstellarActivity
             {
-                ActivityId = response.Id,
+                MessageId = response.Id,
+                ChannelId = Context.Channel.Id,
                 GuildId = Context.Guild.Id,
                 ThreadId = threadId,
                 CreatorUserId = Context.User.Id,
@@ -189,7 +193,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         {
             activity = new Activity
             {
-                ActivityId = response.Id,
+                MessageId = response.Id,
+                ChannelId = Context.Channel.Id,
                 GuildId = Context.Guild.Id,
                 ThreadId = threadId,
                 CreatorUserId = Context.User.Id,
@@ -206,7 +211,26 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.AddActivity(activity);
 
         // Add creator to activity
-        var rolePlayer = areRolesEnabled ? new ActivityRolePlayer
+        var rolePlayer = CreateActivityPlayer(activity, user, areRolesEnabled);
+
+        activity.ActivityPlayers.Add(rolePlayer);
+
+        await _activitiesRepository.SaveChanges();
+
+        // Add components
+        var components = ActivityComponents(activity.MessageId);
+
+        await ModifyOriginalResponseAsync(m =>
+        {
+            m.Content = "";
+            m.Components = components.Build();
+            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList()).Build();
+        });
+    }
+
+    private ActivityPlayer CreateActivityPlayer(Activity activity, SocketGuildUser user, bool areRolesEnabled)
+    {
+        return areRolesEnabled ? new ActivityRolePlayer
         {
             Activity = activity,
             UserId = user.Id,
@@ -218,29 +242,15 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             UserId = user.Id,
             Name = user.DisplayName
         };
-
-        activity.ActivityPlayers.Add(rolePlayer);
-
-        await _activitiesRepository.SaveChanges();
-
-        // Add components
-        var components = ActivityComponents(activity.ActivityId);
-
-        await ModifyOriginalResponseAsync(m =>
-        {
-            m.Content = "";
-            m.Components = components.Build();
-            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList()).Build();
-        });
     }
 
     [ComponentInteraction("activity join:*", ignoreGroupNames: true)]
-    public async Task JoinActivity(ulong activityId)
+    public async Task JoinActivity(ulong messageId)
     {
         var user = (SocketGuildUser)Context.User;
 
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, activityId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -251,7 +261,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // If player is already registered
-        if (await _activitiesRepository.FindActivityPlayer( Context.Guild.Id, activityId, user.Id) is not null)
+        if (await _activitiesRepository.FindActivityPlayer( Context.Guild.Id, Context.Channel.Id, messageId, user.Id) is not null)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -262,7 +272,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // Check if activity is full
-        if (await _activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
+        if (_activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -272,20 +282,9 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return;
         }
 
-        _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, activityId);
+        _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, messageId);
 
-        var activityPlayer = activity.AreRolesEnabled ? new ActivityRolePlayer
-        {
-            Activity = activity,
-            UserId = user.Id,
-            Name = user.DisplayName,
-            Roles = _activityHelper.GetPlayerRoles(user.Roles)
-        } : new ActivityPlayer
-        {
-            Activity = activity,
-            UserId = user.Id,
-            Name = user.DisplayName
-        };
+        var activityPlayer = CreateActivityPlayer(activity, User, activity.AreRolesEnabled);
 
         // Add player to activity
         activity.ActivityPlayers.Add(activityPlayer);
@@ -301,12 +300,12 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     }
 
     [ComponentInteraction("activity leave:*", ignoreGroupNames: true)]
-    public async Task LeaveActivity(ulong activityId)
+    public async Task LeaveActivity(ulong messageId)
     {
         var user = (IGuildUser)Context.User;
 
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, activityId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -317,7 +316,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // Check if player is in activity
-        if (await _activitiesRepository.FindActivityPlayer(Context.Guild.Id, activityId, user.Id) is not { } activityPlayer)
+        if (await _activitiesRepository.FindActivityPlayer(Context.Guild.Id, Context.Channel.Id, messageId, user.Id) is not { } activityPlayer)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -327,7 +326,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return;
         }
 
-        _logger.LogTrace("Player {Player} left activity {Id}", user.DisplayName, activityId);
+        _logger.LogTrace("Player {Player} left activity {Id}", user.DisplayName, messageId);
 
         activity.ActivityPlayers.Remove(activityPlayer);
         await _activitiesRepository.SaveChanges();
@@ -342,12 +341,12 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     }
 
     [ComponentInteraction("activity delete:*", ignoreGroupNames: true)]
-    public async Task DeleteActivity(ulong activityId)
+    public async Task DeleteActivity(ulong messageId)
     {
         var user = (SocketGuildUser) Context.User;
 
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, activityId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -376,15 +375,13 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await Context.Guild.GetThreadChannel(activity.ThreadId).DeleteAsync();
 
         // Delete response
-        await Context.Channel.DeleteMessageAsync(activityId);
+        await Context.Channel.DeleteMessageAsync(messageId);
     }
 
     private async Task UpdateActivityEmbed(Activity activity, ActivityUpdateReason updateReason)
     {
         // Get channel
-        var channel = await Context.Interaction.GetChannelAsync();
-
-        if (channel is null)
+        if (Context.Guild.GetChannel(activity.ChannelId) is not SocketTextChannel channel)
         {
             return;
         }
@@ -392,7 +389,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         // Fetch players
         var players = await _activitiesRepository.LoadActivityPlayers(activity);
 
-        await channel.ModifyMessageAsync(activity.ActivityId, properties =>
+        await channel.ModifyMessageAsync(activity.MessageId, properties =>
         {
             properties.Embed = _activityFormatter.ActivityEmbed(activity, players).Build();
 
@@ -400,8 +397,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             var isActivityFull = players.Count >= activity.MaxPlayers;
             properties.Components = updateReason switch
             {
-                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.ActivityId, disabled: true).Build(),
-                ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.ActivityId, disabled: false).Build(),
+                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.MessageId, disabled: true).Build(),
+                ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.MessageId, disabled: false).Build(),
                 _ => Optional<MessageComponent>.Unspecified
             };
         });

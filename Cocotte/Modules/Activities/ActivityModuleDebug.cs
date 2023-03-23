@@ -13,7 +13,7 @@ public partial class ActivityModule
     {
         if (message is IUserMessage userMessage && userMessage.Author.IsBot)
         {
-            if (await _activitiesRepository.FindActivity(Context.Guild.Id, message.Id) is { } activity)
+            if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, message.Id) is { } activity)
             {
                 // Generate random player
                 var player = new ActivityRolePlayer

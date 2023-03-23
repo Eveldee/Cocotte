@@ -4,13 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cocotte.Modules.Activities.Models;
 
-[PrimaryKey(nameof(GuildId), nameof(ActivityId))]
+[PrimaryKey(nameof(GuildId), nameof(ChannelId), nameof(MessageId))]
+[Index(nameof(ThreadId))]
 public class Activity
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public required ulong GuildId { get; init; }
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public required ulong ActivityId { get; init; }
+    public required ulong ChannelId { get; init; }
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public required ulong MessageId { get; init; }
 
     public required ulong ThreadId { get; init; }
     public required ulong CreatorUserId { get; init; }
@@ -25,6 +28,6 @@ public class Activity
 
     public override string ToString()
     {
-        return $"{nameof(ActivityId)}: {ActivityId}, {nameof(CreatorUserId)}: {CreatorUserId}, {nameof(Description)}: {Description}, {nameof(Type)}: {Type}, {nameof(Name)}: {Name}, {nameof(MaxPlayers)}: {MaxPlayers}";
+        return $"{nameof(MessageId)}: {MessageId}, {nameof(CreatorUserId)}: {CreatorUserId}, {nameof(Description)}: {Description}, {nameof(Type)}: {Type}, {nameof(Name)}: {Name}, {nameof(MaxPlayers)}: {MaxPlayers}";
     }
 }
