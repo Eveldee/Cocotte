@@ -3,19 +3,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cocotte.Modules.Activities.Models;
 
-[PrimaryKey(nameof(ActivityId), nameof(DiscordId))]
+[PrimaryKey(nameof(GuildId), nameof(ActivityId), nameof(UserId))]
 public class ActivityPlayer
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public required ulong DiscordId { get; init; }
+    public required ulong UserId { get; init; }
 
     public required string Name { get; init; }
 
+    public ulong GuildId { get; set; }
     public ulong ActivityId { get; init; }
     public required Activity Activity { get; init; }
 
     public override string ToString()
     {
-        return $"{nameof(DiscordId)}: {DiscordId}, {nameof(Name)}: {Name}";
+        return $"{nameof(UserId)}: {UserId}, {nameof(Name)}: {Name}";
     }
 }

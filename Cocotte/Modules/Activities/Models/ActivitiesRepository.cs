@@ -12,14 +12,14 @@ public class ActivitiesRepository
         _cocotteDbContext = cocotteDbContext;
     }
 
-    public async Task<Activity?> FindActivity(ulong activityId)
+    public async Task<Activity?> FindActivity(ulong guildId, ulong activityId)
     {
-        return await _cocotteDbContext.Activities.FindAsync(activityId);
+        return await _cocotteDbContext.Activities.FindAsync(guildId, activityId);
     }
 
-    public async Task<ActivityPlayer?> FindActivityPlayer(ulong activityId, ulong playerId)
+    public async Task<ActivityPlayer?> FindActivityPlayer(ulong guildId, ulong activityId, ulong playerId)
     {
-        return await _cocotteDbContext.ActivityPlayers.FindAsync(activityId, playerId);
+        return await _cocotteDbContext.ActivityPlayers.FindAsync(guildId, activityId, playerId);
     }
 
     public async Task<int> ActivityPlayerCount(Activity activity) =>
@@ -43,5 +43,10 @@ public class ActivitiesRepository
     public async Task SaveChanges()
     {
         await _cocotteDbContext.SaveChangesAsync();
+    }
+
+    public void DeleteActivity(Activity activity)
+    {
+        _cocotteDbContext.Activities.Remove(activity);
     }
 }

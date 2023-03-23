@@ -18,7 +18,7 @@ public class ActivityFormatter
         _options = options.Value;
     }
 
-    public static string FormatActivityName(ActivityName activityName)
+    public string FormatActivityName(ActivityName activityName)
     {
         return activityName switch
         {
@@ -38,7 +38,7 @@ public class ActivityFormatter
         };
     }
 
-    public static string GetActivityBanner(ActivityName activityName)
+    public string GetActivityBanner(ActivityName activityName)
     {
         return CdnUtils.GetAsset($"banner/{GetActivityCode(activityName)}.webp");
     }
@@ -66,9 +66,15 @@ public class ActivityFormatter
                 $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
         };
 
-        string description = string.IsNullOrWhiteSpace(activity.Description)
-            ? $"Rejoignez l'activité de {MentionUtils.MentionUser(activity.CreatorDiscordId)}"
-            : activity.Description;
+        var descriptionBuilder = new StringBuilder();
+        descriptionBuilder.AppendLine(
+            string.IsNullOrWhiteSpace(activity.Description)
+                ? $"Rejoignez l'activité de {MentionUtils.MentionUser(activity.CreatorUserId)}"
+                : activity.Description
+        );
+
+        descriptionBuilder.AppendLine();
+        descriptionBuilder.Append($"**[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**");
 
         string bannerUrl = GetActivityBanner(activity.Name);
 
@@ -77,7 +83,7 @@ public class ActivityFormatter
         var builder = new EmbedBuilder()
             .WithColor(color)
             .WithTitle(title)
-            .WithDescription(description)
+            .WithDescription(descriptionBuilder.ToString())
             .WithImageUrl(bannerUrl)
             .WithFields(playersField);
 
@@ -90,7 +96,7 @@ public class ActivityFormatter
         return builder;
     }
 
-    private static string GetActivityCode(ActivityName activityName) => activityName switch
+    private string GetActivityCode(ActivityName activityName) => activityName switch
     {
         ActivityName.Abyss => "VA",
         ActivityName.OriginsOfWar => "OOW",

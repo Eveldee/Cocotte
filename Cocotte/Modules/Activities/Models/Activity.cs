@@ -1,16 +1,21 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cocotte.Modules.Activities.Models;
 
+[PrimaryKey(nameof(GuildId), nameof(ActivityId))]
 public class Activity
 {
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public required ulong ActivityId { get; set; }
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public required ulong GuildId { get; init; }
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    public required ulong ActivityId { get; init; }
 
-    public required ulong CreatorDiscordId { get; init; }
-    public required string CreatorDiscordName { get; set; }
-    public string? Description { get; init; }
+    public required ulong ThreadId { get; init; }
+    public required ulong CreatorUserId { get; init; }
+    public required string CreatorDisplayName { get; init; }
+    public string? Description { get; set; }
     public required ActivityType Type { get; init; }
     public required ActivityName Name { get; init; }
     public required bool AreRolesEnabled { get; init; }
@@ -20,6 +25,6 @@ public class Activity
 
     public override string ToString()
     {
-        return $"{nameof(ActivityId)}: {ActivityId}, {nameof(CreatorDiscordId)}: {CreatorDiscordId}, {nameof(Description)}: {Description}, {nameof(Type)}: {Type}, {nameof(Name)}: {Name}, {nameof(MaxPlayers)}: {MaxPlayers}";
+        return $"{nameof(ActivityId)}: {ActivityId}, {nameof(CreatorUserId)}: {CreatorUserId}, {nameof(Description)}: {Description}, {nameof(Type)}: {Type}, {nameof(Name)}: {Name}, {nameof(MaxPlayers)}: {MaxPlayers}";
     }
 }

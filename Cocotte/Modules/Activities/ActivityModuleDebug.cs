@@ -13,14 +13,14 @@ public partial class ActivityModule
     {
         if (message is IUserMessage userMessage && userMessage.Author.IsBot)
         {
-            if (await _activitiesRepository.FindActivity(message.Id) is { } activity)
+            if (await _activitiesRepository.FindActivity(Context.Guild.Id, message.Id) is { } activity)
             {
                 // Generate random player
                 var player = new ActivityRolePlayer
                 {
                     Activity = activity,
                     Name = $"Player{Random.Shared.Next(1, 100)}",
-                    DiscordId = (ulong) Random.Shared.NextInt64(),
+                    UserId = (ulong) Random.Shared.NextInt64(),
                     Roles = (PlayerRoles) Random.Shared.Next((int) (PlayerRoles.Dps | PlayerRoles.Helper |
                                                                       PlayerRoles.Support | PlayerRoles.Tank) + 1)
                 };
