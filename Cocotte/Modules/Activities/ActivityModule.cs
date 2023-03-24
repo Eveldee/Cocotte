@@ -138,8 +138,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     private async Task CreateActivity(ActivityName activityName, string description, bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null, InterstellarColor? interstellarColor = null)
     {
-        var user = (SocketGuildUser)Context.User;
-        _logger.LogTrace("{User} is creating activity {Activity}", user.DisplayName, activityName);
+        _logger.LogTrace("{User} is creating activity {Activity}", User.DisplayName, activityName);
 
         // Activities are identified using their original message id
         await RespondAsync("> ***Création de l'activité en cours...***");
@@ -147,7 +146,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         var response = await GetOriginalResponseAsync();
 
         // Create associated thread
-        var threadId = await CreateThread(activityName, user.DisplayName);
+        var threadId = await CreateThread(activityName, User.DisplayName);
 
         var activityType = ActivityHelper.ActivityNameToType(activityName);
         maxPlayers ??= ActivityHelper.ActivityTypeToMaxPlayers(activityType);
@@ -202,7 +201,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 Description = description,
                 Type = activityType,
                 Name = activityName,
-                AreRolesEnabled = true,
+                AreRolesEnabled = areRolesEnabled,
                 MaxPlayers = (uint) maxPlayers
             };
         }
@@ -211,7 +210,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.AddActivity(activity);
 
         // Add creator to activity
-        var rolePlayer = CreateActivityPlayer(activity, user, areRolesEnabled);
+        var rolePlayer = CreateActivityPlayer(activity, User, areRolesEnabled);
 
         activity.ActivityPlayers.Add(rolePlayer);
 
@@ -247,8 +246,6 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     [ComponentInteraction("activity join:*", ignoreGroupNames: true)]
     public async Task JoinActivity(ulong messageId)
     {
-        var user = (SocketGuildUser)Context.User;
-
         // Check if activity exists
         if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
@@ -260,38 +257,10 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return;
         }
 
-        // If player is already registered
-        if (await _activitiesRepository.FindActivityPlayer( Context.Guild.Id, Context.Channel.Id, messageId, user.Id) is not null)
+        if (!await AddUserToActivity(activity, User, self: true))
         {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("Vous êtes **déjà inscrit** à cette activité").Build()
-            );
-
             return;
         }
-
-        // Check if activity is full
-        if (_activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
-        {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("L'activité est **complète**").Build()
-            );
-
-            return;
-        }
-
-        _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, messageId);
-
-        var activityPlayer = CreateActivityPlayer(activity, User, activity.AreRolesEnabled);
-
-        // Add player to activity
-        activity.ActivityPlayers.Add(activityPlayer);
-        await _activitiesRepository.SaveChanges();
-
-        // Update activity embed
-        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
 
         await RespondAsync(
             ephemeral: true,
@@ -302,8 +271,6 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     [ComponentInteraction("activity leave:*", ignoreGroupNames: true)]
     public async Task LeaveActivity(ulong messageId)
     {
-        var user = (IGuildUser)Context.User;
-
         // Check if activity exists
         if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
@@ -315,24 +282,10 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return;
         }
 
-        // Check if player is in activity
-        if (await _activitiesRepository.FindActivityPlayer(Context.Guild.Id, Context.Channel.Id, messageId, user.Id) is not { } activityPlayer)
+        if (!await RemovePlayerFromActivity(activity, User, self: true))
         {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("Vous n'êtes **pas inscrit** à cette activité").Build()
-            );
-
             return;
         }
-
-        _logger.LogTrace("Player {Player} left activity {Id}", user.DisplayName, messageId);
-
-        activity.ActivityPlayers.Remove(activityPlayer);
-        await _activitiesRepository.SaveChanges();
-
-        // Update activity embed
-        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerLeave);
 
         await RespondAsync(
             ephemeral: true,
@@ -343,8 +296,6 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     [ComponentInteraction("activity delete:*", ignoreGroupNames: true)]
     public async Task DeleteActivity(ulong messageId)
     {
-        var user = (SocketGuildUser) Context.User;
-
         // Check if activity exists
         if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
         {
@@ -357,7 +308,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // Check if user has permission to delete this activity
-        if (user.Id != activity.CreatorUserId && !user.GetPermissions((IGuildChannel) Context.Channel).ManageMessages)
+        if (User.Id != activity.CreatorUserId && !User.GetPermissions((IGuildChannel) Context.Channel).ManageMessages)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -376,6 +327,107 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
         // Delete response
         await Context.Channel.DeleteMessageAsync(messageId);
+    }
+
+    private async Task<bool> AddUserToActivity(Activity activity, SocketGuildUser user, bool self)
+    {
+        // If player is already registered
+        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId, user.Id) is not
+            null)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed(self ? "Vous êtes **déjà inscrit** à cette activité" : $"{user.DisplayName} est **déjà inscrit** à cette activité").Build()
+            );
+
+            return false;
+        }
+
+        // Check if activity is full
+        if (await _activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("L'activité est **complète**").Build()
+            );
+
+            return false;
+        }
+
+        _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, activity.MessageId);
+
+        var activityPlayer = CreateActivityPlayer(activity, user, activity.AreRolesEnabled);
+
+        // Add player to activity
+        activity.ActivityPlayers.Add(activityPlayer);
+        await _activitiesRepository.SaveChanges();
+
+        // Update activity embed
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
+
+        // Send join message to thread and add user to thread
+        var thread = Context.Guild.GetThreadChannel(activity.ThreadId);
+
+        await thread.AddUserAsync(user);
+
+        string embedContent = $"**{user.DisplayName}** a été **ajouté** à l'activité";
+        if (self)
+        {
+            await thread.SendMessageAsync(
+                embed: EmbedUtils.InfoEmbed(embedContent).Build()
+            );
+        }
+        else
+        {
+            await RespondAsync(
+                embed: EmbedUtils.InfoEmbed(embedContent).Build()
+            );
+        }
+
+        return true;
+    }
+
+    private async Task<bool> RemovePlayerFromActivity(Activity activity, SocketGuildUser user, bool self)
+    {
+        // Check if player is in activity
+        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId, user.Id) is not { } activityPlayer)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed(self ? "Vous n'êtes **pas inscrit** à cette activité" : $"{user.DisplayName} n'est **pas inscrit** à cette activité").Build()
+            );
+
+            return false;
+        }
+
+        _logger.LogTrace("Player {Player} left activity {Id}", user.DisplayName, activity.MessageId);
+
+        activity.ActivityPlayers.Remove(activityPlayer);
+        await _activitiesRepository.SaveChanges();
+
+        // Update activity embed
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerLeave);
+
+        // Send leave message to thread and remove user from thread
+        var thread = Context.Guild.GetThreadChannel(activity.ThreadId);
+
+        await thread.RemoveUserAsync(user);
+
+        string embedContent = $"{user.DisplayName} a été **enlevé** de l'activité";
+        if (self)
+        {
+            await thread.SendMessageAsync(
+                embed: EmbedUtils.InfoEmbed(embedContent).Build()
+            );
+        }
+        else
+        {
+            await RespondAsync(
+                embed: EmbedUtils.InfoEmbed(embedContent).Build()
+            );
+        }
+
+        return true;
     }
 
     private async Task UpdateActivityEmbed(Activity activity, ActivityUpdateReason updateReason)

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Cocotte.Modules.Activities.Models;
 using Cocotte.Utils;
 using Discord;
@@ -56,34 +57,12 @@ public partial class ActivityModule
             return;
         }
 
-        // Check that the user is not already in the activity
-        if (await _activitiesRepository.ActivityContainsUser(activity, user.Id))
-        {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("Cet utilisateur est **déjà inscrit** à cette activité").Build()
-            );
-
-            return;
-        }
-
-        var activityPlayer = CreateActivityPlayer(activity, (SocketGuildUser) user, activity.AreRolesEnabled);
-
-        activity.ActivityPlayers.Add(activityPlayer);
-        await _activitiesRepository.SaveChanges();
-
-        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
-
-        await RespondAsync(
-            ephemeral: true,
-            embed: EmbedUtils.SuccessEmbed($"{((IGuildUser) user).DisplayName} a bien été **ajouté** à l'activité").Build()
-        );
+        await AddUserToActivity(activity, (SocketGuildUser) user, self: false);
     }
 
-    [SlashCommand("ajouter", "Ajouter un joueur à cette activité")]
+    [SlashCommand("enlever", "Enlever un joueur de cette activité")]
     public async Task ThreadRemovePlayer(IUser user)
     {
-        // TODO: Autocomplete
         // Get activity linked to this thread
         var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
 
@@ -92,30 +71,31 @@ public partial class ActivityModule
             return;
         }
 
-        // Check that the user is not already in the activity
-        if (await _activitiesRepository.ActivityContainsUser(activity, user.Id))
-        {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("Cet utilisateur est **déjà inscrit** à cette activité").Build()
-            );
+        await RemovePlayerFromActivity(activity, (SocketGuildUser) user, self: false);
+    }
 
+    [SlashCommand("ping", "Ping les joueurs inscrits à cette activité")]
+    public async Task ThreadPingPlayers(string message = "**Appel de groupe**")
+    {
+        // Get activity linked to this thread
+        var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
+
+        if (!await CheckCommandInThread(activity) || activity is null)
+        {
             return;
         }
 
-        var activityPlayer = CreateActivityPlayer(activity, (SocketGuildUser) user, activity.AreRolesEnabled);
+        // Get user ids
+        var userIds = await _activitiesRepository.GetActivityPlayerIds(activity);
 
-        activity.ActivityPlayers.Add(activityPlayer);
-        await _activitiesRepository.SaveChanges();
 
-        await UpdateActivityEmbed(activity, ActivityUpdateReason.PlayerJoin);
+        // Generate message
+        var pingMessageBuilder = new StringBuilder(message);
+        pingMessageBuilder.AppendLine("\n");
+        pingMessageBuilder.Append(string.Join(", ", userIds.Select(id => MentionUtils.MentionUser(id))));
 
-        await RespondAsync(
-            ephemeral: true,
-            embed: EmbedUtils.SuccessEmbed($"{((IGuildUser) user).DisplayName} a bien été **ajouté** à l'activité").Build()
-        );
+        await RespondAsync(pingMessageBuilder.ToString());
     }
-
 
     private async Task<bool> CheckCommandInThread(Activity? activity)
     {

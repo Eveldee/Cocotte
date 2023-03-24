@@ -22,7 +22,7 @@ public class ActivitiesRepository
         return await _cocotteDbContext.ActivityPlayers.FindAsync(guildId, channelId, messageId, userId);
     }
 
-    public int ActivityPlayerCount(Activity activity) => activity.ActivityPlayers.Count;
+    public async Task<int> ActivityPlayerCount(Activity activity) => await _cocotteDbContext.Entry(activity).Collection(a => a.ActivityPlayers).Query().CountAsync();
 
     public async Task<IReadOnlyCollection<ActivityPlayer>> LoadActivityPlayers(Activity activity)
     {
@@ -60,5 +60,14 @@ public class ActivitiesRepository
             .Collection(a => a.ActivityPlayers)
             .Query()
             .AnyAsync(p => p.UserId == userId);
+    }
+
+    public async Task<IList<ulong>> GetActivityPlayerIds(Activity activity)
+    {
+        return await _cocotteDbContext.Entry(activity)
+            .Collection(a => a.ActivityPlayers)
+            .Query()
+            .Select(p => p.UserId)
+            .ToListAsync();
     }
 }

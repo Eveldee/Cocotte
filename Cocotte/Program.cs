@@ -72,7 +72,7 @@ await using(var scope = host.Services.CreateAsyncScope())
     if (hostEnvironment.IsDevelopment())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<CocotteDbContext>();
-        await dbContext.Database.EnsureDeletedAsync();
+        // await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
     }
 }
