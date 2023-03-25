@@ -4,7 +4,7 @@ public class CompositeRolesOptions
 {
     public const string SectionName = "CompositeRolesOptions";
 
-    public required IReadOnlyDictionary<string, GuildCompositeRoles[]> CompositeRoles { get; init; }
+    public required IReadOnlyDictionary<ulong, GuildCompositeRoles[]> CompositeRoles { get; init; }
 }
 
 public class GuildCompositeRoles

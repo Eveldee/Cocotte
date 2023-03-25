@@ -8,14 +8,13 @@ namespace Cocotte.Modules.Activities;
 public class CompositeRolesListener
 {
     private readonly ILogger<CompositeRolesListener> _logger;
-    private readonly IDictionary<ulong, GuildCompositeRoles[]> _compositeRoles;
+    private readonly IReadOnlyDictionary<ulong, GuildCompositeRoles[]> _compositeRoles;
 
     public CompositeRolesListener(ILogger<CompositeRolesListener> logger,
         IOptions<CompositeRolesOptions> compositeRolesOptions)
     {
         _logger = logger;
-        // Initialize dictionary: transform string guildIds to ulong
-        _compositeRoles = compositeRolesOptions.Value.CompositeRoles.ToDictionary(kp => ulong.Parse(kp.Key), kp => kp.Value);
+        _compositeRoles = compositeRolesOptions.Value.CompositeRoles;
     }
 
     public async Task UserUpdated(Cacheable<SocketGuildUser, ulong> cacheable, SocketGuildUser guildUser)
