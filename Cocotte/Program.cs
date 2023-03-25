@@ -74,11 +74,16 @@ await using(var scope = host.Services.CreateAsyncScope())
 {
     var hostEnvironment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
+    var dbContext = scope.ServiceProvider.GetRequiredService<CocotteDbContext>();
     if (hostEnvironment.IsDevelopment())
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<CocotteDbContext>();
         // await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        // Apply migrations
+        await dbContext.Database.MigrateAsync();
     }
 }
 

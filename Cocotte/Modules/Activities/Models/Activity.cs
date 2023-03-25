@@ -23,6 +23,8 @@ public class Activity
     public required bool AreRolesEnabled { get; init; }
     public required uint MaxPlayers { get; set; }
 
+    public DateTime CreationDate { get; init; } = DateTime.Now;
+
     public List<ActivityPlayer> ActivityPlayers { get; init; } = new();
 
     public override string ToString()
