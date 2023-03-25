@@ -65,7 +65,17 @@ public class CocotteService : BackgroundService
         await _client.LoginAsync(TokenType.Bot, _options.Token);
         await _client.StartAsync();
 
+        // Register events
+        RegisterEvents();
+
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private void RegisterEvents()
+    {
+        var composteRolesListener = _serviceProvider.GetRequiredService<CompositeRolesListener>();
+
+        _client.GuildMemberUpdated += composteRolesListener.UserUpdated;
     }
 
     private bool ValidateOptions()

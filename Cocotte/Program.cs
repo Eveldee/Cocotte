@@ -21,12 +21,14 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         configuration.AddJsonFile("discord.json", false, false);
         configuration.AddJsonFile("activity.json", false, false);
+        configuration.AddJsonFile("compositeRoles.json", false, false);
     })
     .ConfigureServices((context, services) =>
     {
         // Options
         services.Configure<DiscordOptions>(context.Configuration.GetSection(DiscordOptions.SectionName));
         services.Configure<ActivityOptions>(context.Configuration.GetSection(ActivityOptions.SectionName));
+        services.Configure<CompositeRolesOptions>(context.Configuration.GetSection(CompositeRolesOptions.SectionName));
 
         // Database
         services.AddDbContext<CocotteDbContext>(options =>
@@ -52,6 +54,9 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddTransient<ActivityFormatter>();
         services.AddTransient<InterstellarFormatter>();
         services.AddTransient<ActivityHelper>();
+
+        // Composite roles
+        services.AddSingleton<CompositeRolesListener>();
 
         // Raids
         services.AddTransient<RaidFormatter>();

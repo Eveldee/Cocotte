@@ -1,0 +1,26 @@
+﻿{
+	"CompositeRolesOptions": {
+		"CompositeRoles": {
+			"someGuildId (ulong)": [
+				{
+					"TargetRoleId": 1,
+					"CompositeRolesIds": [
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"anotherGuildId (ulong)": [
+				{
+					"TargetRoleId": 45,
+					"CompositeRolesIds": [
+						98,
+						1,
+						2
+					]
+				}
+			]
+		}
+	}
+}
