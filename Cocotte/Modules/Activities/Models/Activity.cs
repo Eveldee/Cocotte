@@ -17,6 +17,7 @@ public class Activity
     public required ulong ThreadId { get; init; }
     public required ulong CreatorUserId { get; init; }
     public required string CreatorDisplayName { get; init; }
+    public TimeOnly? DueTime { get; init; }
     public string? Description { get; set; }
     public required ActivityType Type { get; init; }
     public required ActivityName Name { get; init; }

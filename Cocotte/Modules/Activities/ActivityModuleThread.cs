@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+﻿using System.Text;
 using Cocotte.Modules.Activities.Models;
 using Cocotte.Utils;
 using Discord;

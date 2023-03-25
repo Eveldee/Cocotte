@@ -13,4 +13,11 @@ public static class DateTimeUtils
         int offset = (7 - c + d) % 7;
         return offset;
     }
+
+    public static DateTime WithTimeOnly(this DateTime dateTime, TimeOnly timeOnly)
+    {
+        return new DateTime(
+            dateTime.Year, dateTime.Month, dateTime.Day, timeOnly.Hour, timeOnly.Minute, timeOnly.Second
+        );
+    }
 }

@@ -53,91 +53,108 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     [SlashCommand("abime-néant", "Créer un groupe pour l'Abîme du Néant")]
     [Alias("abime", "abyss")]
-    public async Task ActivityVoidAbyss([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(6)] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityVoidAbyss([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(6)] uint stage, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Abyss, description, stage: stage);
+        await CreateActivity(ActivityName.Abyss, timeInput, description, stage: stage);
     }
 
     [SlashCommand("origine-guerre", "Créer un groupe pour l'Origine de la guerre")]
     [Alias("origine", "OOW")]
-    public async Task ActivityOrigins([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(25)] uint stage, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityOrigins([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(25)] uint stage, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.OriginsOfWar, description, stage: stage);
+        await CreateActivity(ActivityName.OriginsOfWar, timeInput, description, stage: stage);
     }
 
     [SlashCommand("raids", "Créer un groupe pour les Raids")]
-    public async Task ActivityRaids([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityRaids([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Raids, description);
+        await CreateActivity(ActivityName.Raids, timeInput, description);
     }
 
     [SlashCommand("conflit-frontalier", "Créer un groupe pour Conflit frontalier")]
     [Alias("conflit", "FC")]
-    public async Task ActivityFrontierClash([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityFrontierClash([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.FrontierClash, description);
+        await CreateActivity(ActivityName.FrontierClash, timeInput, description);
     }
 
     [SlashCommand("failles-neant", "Créer un groupe pour les Failles du néant")]
     [Alias("failles", "rift")]
-    public async Task ActivityVoidRift([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityVoidRift([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.VoidRift, description);
+        await CreateActivity(ActivityName.VoidRift, timeInput, description);
     }
 
     [SlashCommand("operations-conjointes", "Créer un groupe pour les Opérations conjointes")]
     [Alias("operations", "JO")]
-    public async Task ActivityJointOperation([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityJointOperation([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.JointOperation, description);
+        await CreateActivity(ActivityName.JointOperation, timeInput, description);
     }
 
     [SlashCommand("portes-interstellaires", "Créer un groupe pour les Portes interstellaires")]
     [Alias("portes")]
-    public async Task ActivityInterstellarExploration([Summary("couleur", "De quel couleur de matériaux s'agît-il")] InterstellarColor color, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityInterstellarExploration([Summary("couleur", "De quel couleur de matériaux s'agît-il")] InterstellarColor color, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.InterstellarExploration, description, areRolesEnabled: false, interstellarColor: color);
+        await CreateActivity(ActivityName.InterstellarExploration, timeInput, description, areRolesEnabled: false, interstellarColor: color);
     }
 
     [SlashCommand("3v3", "Créer un groupe pour le 3v3 (Échapper au destin)")]
     [Alias("BR")]
-    public async Task ActivityBreakFromDestiny([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityBreakFromDestiny([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.BreakFromDestiny, description, areRolesEnabled: false);
+        await CreateActivity(ActivityName.BreakFromDestiny, timeInput, description, areRolesEnabled: false);
     }
 
     [SlashCommand("8v8", "Créer un groupe pour le 8v8 (Abîme critique)")]
     [Alias("critical")]
-    public async Task ActivityCriticalAbyss([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityCriticalAbyss([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.CriticalAbyss, description);
+        await CreateActivity(ActivityName.CriticalAbyss, timeInput, description);
     }
 
     [SlashCommand("evenement", "Créer un groupe pour les évènements")]
     [Alias("event")]
-    public async Task ActivityEvent([Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)] uint maxPlayers = 8,  [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityEvent([Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)] uint maxPlayers = 8, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Event, description, areRolesEnabled: false, maxPlayers: maxPlayers);
+        await CreateActivity(ActivityName.Event, timeInput, description, areRolesEnabled: false, maxPlayers: maxPlayers);
     }
 
     [SlashCommand("peche", "Créer un groupe pour de la pêche")]
     [Alias("fishing")]
-    public async Task ActivityFishing([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityFishing([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Fishing, description, areRolesEnabled: false);
+        await CreateActivity(ActivityName.Fishing, timeInput, description, areRolesEnabled: false);
     }
 
     [SlashCommand("course", "Créer un groupe pour les courses de Mirroria")]
     [Alias("BR")]
-    public async Task ActivityMirroriaRace([Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityMirroriaRace([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.MirroriaRace, description, areRolesEnabled: false);
+        await CreateActivity(ActivityName.MirroriaRace, timeInput, description, areRolesEnabled: false);
     }
 
     #endregion
 
-    private async Task CreateActivity(ActivityName activityName, string description, bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null, InterstellarColor? interstellarColor = null)
+    private async Task CreateActivity(ActivityName activityName, string? timeInput, string description, bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null, InterstellarColor? interstellarColor = null)
     {
+        // Check time if it's specified
+        TimeOnly? time = null;
+        if (timeInput is not null)
+        {
+            if (!TimeOnly.TryParse(timeInput, out var parsedTime))
+            {
+                await RespondAsync(
+                    ephemeral: true,
+                    embed: EmbedUtils.ErrorEmbed("**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`").Build()
+                );
+
+                return;
+            }
+
+            time = parsedTime;
+        }
+
         _logger.LogTrace("{User} is creating activity {Activity}", User.DisplayName, activityName);
 
         // Activities are identified using their original message id
@@ -163,6 +180,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
+                DueTime = time,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = areRolesEnabled,
@@ -181,6 +199,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
+                DueTime = time,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = false,
@@ -199,6 +218,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
+                DueTime = time,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = areRolesEnabled,

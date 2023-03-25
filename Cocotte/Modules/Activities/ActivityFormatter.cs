@@ -66,13 +66,27 @@ public class ActivityFormatter
                 $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
         };
 
+        // Build description
         var descriptionBuilder = new StringBuilder();
+
+        // Add time if specified
+        if (activity.DueTime is { } time)
+        {
+            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(DateTime.Today.WithTimeOnly(time), TimestampTagStyles.ShortTime)}**");
+        }
+        else
+        {
+            descriptionBuilder.AppendLine($"**:clock2: Maintenant**");
+        }
+
+        // Add generic message or specified activity description
         descriptionBuilder.AppendLine(
             string.IsNullOrWhiteSpace(activity.Description)
                 ? $"Rejoignez l'activité de {MentionUtils.MentionUser(activity.CreatorUserId)}"
                 : activity.Description
         );
 
+        // Add thread link
         descriptionBuilder.AppendLine();
         descriptionBuilder.Append($"**[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**");
 
