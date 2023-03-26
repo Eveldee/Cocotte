@@ -174,6 +174,44 @@ public partial class ActivityModule
         await RespondAsync(pingMessageBuilder.ToString());
     }
 
+    [SlashCommand("description", "Changer la description de l'activité")]
+    public async Task ThreadChangeDescription()
+    {
+        // Get activity linked to this thread
+        var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
+
+        if (!await CheckCommandInThread(activity, checkCreator: true) || activity is null)
+        {
+            return;
+        }
+
+        // Open modal
+        await RespondWithModalAsync<ActivityDescriptionModal>("activity description_modal");
+    }
+
+    [ModalInteraction("activity description_modal", ignoreGroupNames: true)]
+    public async Task ActivityDescriptionSubmit(ActivityDescriptionModal descriptionModal)
+    {
+        // Get activity linked to this thread
+        var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
+
+        if (!await CheckCommandInThread(activity, checkCreator: true) || activity is null)
+        {
+            return;
+        }
+
+        // Update description
+        activity.Description = descriptionModal.Description;
+        await _activitiesRepository.SaveChanges();
+
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.Update);
+
+        await RespondAsync(
+            ephemeral: true,
+            embed: EmbedUtils.InfoEmbed("**La description** a bien été changée").Build()
+        );
+    }
+
     private async Task<bool> CheckCommandInThread(Activity? activity, bool checkCreator = false)
     {
         // Check if activity is not null (means we are in a valid thread)
@@ -199,4 +237,13 @@ public partial class ActivityModule
 
         return true;
     }
+}
+
+public class ActivityDescriptionModal : IModal
+{
+    public string Title => "Nouvelle description";
+
+    [InputLabel("Description")]
+    [ModalTextInput("activity_description", TextInputStyle.Paragraph)]
+    public required string Description { get; set; }
 }

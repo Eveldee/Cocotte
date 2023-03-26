@@ -96,7 +96,7 @@ public class ActivityFormatter
         // Add time if specified
         if (activity.DueDateTime is { } dueDateTime)
         {
-            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ― {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
+            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ╿ {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
         }
         else
         {
@@ -112,7 +112,12 @@ public class ActivityFormatter
 
         // Add thread link
         descriptionBuilder.AppendLine();
-        descriptionBuilder.Append($"**[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**");
+        descriptionBuilder.Append(
+        $"""
+        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
+                                **[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**
+        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
+        """);
 
         string bannerUrl = GetActivityBanner(activity.Name);
 
