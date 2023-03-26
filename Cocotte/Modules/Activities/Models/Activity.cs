@@ -25,8 +25,11 @@ public class Activity
     public required uint MaxPlayers { get; set; }
 
     public DateTime CreationDate { get; init; } = DateTime.Now;
+    public bool IsClosed { get; set; }
 
     public List<ActivityPlayer> ActivityPlayers { get; init; } = new();
+
+    public string JobKey => $"{GuildId}/{ChannelId}/{MessageId}";
 
     public override string ToString()
     {

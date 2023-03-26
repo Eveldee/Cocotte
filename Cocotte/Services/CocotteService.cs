@@ -52,11 +52,11 @@ public class CocotteService : BackgroundService
         }
 
         // Initialize modules and commands
-        // await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _serviceProvider);
+        using var scope = _serviceProvider.CreateScope();
         #if DEBUG
-        await _interactionService.AddModuleAsync(typeof(Modules.Ping.PingModule), _serviceProvider);
+        await _interactionService.AddModuleAsync(typeof(Modules.Ping.PingModule), scope.ServiceProvider);
         #endif
-        await _interactionService.AddModuleAsync(typeof(ActivityModule), _serviceProvider);
+        await _interactionService.AddModuleAsync(typeof(ActivityModule), scope.ServiceProvider);
 
         _client.Ready += ClientOnReady;
         _client.InteractionCreated += HandleInteraction;

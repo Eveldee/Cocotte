@@ -1,4 +1,7 @@
-﻿using Cocotte.Options;
+﻿using Cocotte.Modules.Activities.Models;
+using Cocotte.Options;
+using Cocotte.Utils;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 
@@ -9,9 +12,13 @@ public class ActivityHelper
     private const uint UnlimitedPlayers = uint.MaxValue;
 
     private readonly ActivityOptions _options;
+    private readonly ActivitiesRepository _activitiesRepository;
+    private readonly ActivityFormatter _activityFormatter;
 
-    public ActivityHelper(IOptions<ActivityOptions> options)
+    public ActivityHelper(IOptions<ActivityOptions> options, ActivitiesRepository activitiesRepository, ActivityFormatter activityFormatter)
     {
+        _activitiesRepository = activitiesRepository;
+        _activityFormatter = activityFormatter;
         _options = options.Value;
     }
 
@@ -72,4 +79,50 @@ public class ActivityHelper
 
         _ => 0
     };
+
+    public async Task UpdateActivityEmbed(IMessageChannel channel, Activity activity, ActivityUpdateReason updateReason)
+    {
+        // Fetch players
+        var players = await _activitiesRepository.LoadActivityPlayers(activity);
+
+        await channel.ModifyMessageAsync(activity.MessageId, properties =>
+        {
+            properties.Embed = _activityFormatter.ActivityEmbed(activity, players).Build();
+
+            // Disable join button if the activity is full on join, enable it on leave if activity is not full anymore
+            var isActivityFull = players.Count >= activity.MaxPlayers;
+            properties.Components = updateReason switch
+            {
+                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.MessageId, disabled: true).Build(),
+                ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.MessageId, disabled: false).Build(),
+                _ => Optional<MessageComponent>.Unspecified
+            };
+        });
+    }
+
+    public ComponentBuilder ActivityComponents(ulong activityId, bool disabled = false)
+    {
+        return new ComponentBuilder()
+            .AddRow(new ActionRowBuilder()
+                .WithButton(new ButtonBuilder()
+                    .WithLabel("Rejoindre")
+                    .WithCustomId($"activity join:{activityId}")
+                    .WithEmote(":white_check_mark:".ToEmote())
+                    .WithStyle(ButtonStyle.Primary)
+                    .WithDisabled(disabled)
+                )
+                .WithButton(new ButtonBuilder()
+                    .WithLabel("Se désinscrire")
+                    .WithCustomId($"activity leave:{activityId}")
+                    .WithEmote(":x:".ToEmote())
+                    .WithStyle(ButtonStyle.Secondary)
+                )
+                .WithButton(new ButtonBuilder()
+                    .WithLabel("Supprimer")
+                    .WithCustomId($"activity delete:{activityId}")
+                    .WithEmote(":wastebasket:".ToEmote())
+                    .WithStyle(ButtonStyle.Danger)
+                )
+            );
+    }
 }

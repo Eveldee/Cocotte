@@ -8,6 +8,7 @@ using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.EntityFrameworkCore;
+using Quartz;
 
 DiscordSocketConfig discordSocketConfig = new()
 {
@@ -25,6 +26,18 @@ IHost host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
+        // Quartz service
+        services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+            q.UsePersistentStore(options =>
+            {
+                options.UseJsonSerializer();
+                options.UseMicrosoftSQLite("Data Source=cocotte.db");
+            });
+        });
+        services.AddQuartzHostedService(options => options.WaitForJobsToComplete = true);
+
         // Options
         services.Configure<DiscordOptions>(context.Configuration.GetSection(DiscordOptions.SectionName));
         services.Configure<ActivityOptions>(context.Configuration.GetSection(ActivityOptions.SectionName));
@@ -32,8 +45,8 @@ IHost host = Host.CreateDefaultBuilder(args)
 
         // Database
         services.AddDbContext<CocotteDbContext>(options =>
-            options.UseSqlite(context.Configuration.GetConnectionString("CocotteContext")), ServiceLifetime.Transient, ServiceLifetime.Transient);
-        services.AddTransient<ActivitiesRepository>();
+            options.UseSqlite(context.Configuration.GetConnectionString("CocotteContext")));
+        services.AddScoped<ActivitiesRepository>();
 
         // Discord.Net
         services.AddHostedService<DiscordLoggingService>();
@@ -53,19 +66,16 @@ IHost host = Host.CreateDefaultBuilder(args)
         // Activities
         services.AddTransient<ActivityFormatter>();
         services.AddTransient<InterstellarFormatter>();
-        services.AddTransient<ActivityHelper>();
+        services.AddScoped<ActivityHelper>();
+        services.AddScoped<ActivityCloseJob>();
 
         // Composite roles
         services.AddSingleton<CompositeRolesListener>();
 
         // Raids
-        services.AddTransient<RaidFormatter>();
-        services.AddSingleton<RaidRegisterManager>();
-        services.AddTransient<RosterAssigner>();
-
-        // Custom
-        services.AddSingleton<SharedCounter>();
-        services.AddTransient<TransientCounter>();
+        // services.AddTransient<RaidFormatter>();
+        // services.AddSingleton<RaidRegisterManager>();
+        // services.AddTransient<RosterAssigner>();
     })
     .Build();
 

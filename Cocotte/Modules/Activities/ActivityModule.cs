@@ -7,6 +7,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
+using Quartz;
 using Alias = Discord.Commands.AliasAttribute;
 
 namespace Cocotte.Modules.Activities;
@@ -23,15 +24,19 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     private readonly ActivityHelper _activityHelper;
     private readonly ActivitiesRepository _activitiesRepository;
     private readonly ActivityFormatter _activityFormatter;
+    private readonly ISchedulerFactory _schedulerFactory;
 
     private SocketGuildUser User => (SocketGuildUser) Context.User;
 
-    public ActivityModule(ILogger<ActivityModule> logger, IOptions<ActivityOptions> options, ActivityHelper activityHelper, ActivitiesRepository activitiesRepository, ActivityFormatter activityFormatter)
+    public ActivityModule(ILogger<ActivityModule> logger, IOptions<ActivityOptions> options,
+        ActivityHelper activityHelper, ActivitiesRepository activitiesRepository,
+        ActivityFormatter activityFormatter, ISchedulerFactory schedulerFactory)
     {
         _logger = logger;
         _activityHelper = activityHelper;
         _activitiesRepository = activitiesRepository;
         _activityFormatter = activityFormatter;
+        _schedulerFactory = schedulerFactory;
         _options = options.Value;
     }
 
@@ -53,90 +58,122 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     [SlashCommand("abime-néant", "Créer un groupe pour l'Abîme du Néant")]
     [Alias("abime", "abyss")]
-    public async Task ActivityVoidAbyss([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(6)] uint stage, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityVoidAbyss(
+        [Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(6)] uint stage,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.Abyss, timeInput, description, stage: stage);
     }
 
     [SlashCommand("origine-guerre", "Créer un groupe pour l'Origine de la guerre")]
     [Alias("origine", "OOW")]
-    public async Task ActivityOrigins([Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(25)] uint stage, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityOrigins(
+        [Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(25)] uint stage,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.OriginsOfWar, timeInput, description, stage: stage);
     }
 
     [SlashCommand("raids", "Créer un groupe pour les Raids")]
-    public async Task ActivityRaids([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityRaids(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.Raids, timeInput, description);
     }
 
     [SlashCommand("conflit-frontalier", "Créer un groupe pour Conflit frontalier")]
     [Alias("conflit", "FC")]
-    public async Task ActivityFrontierClash([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityFrontierClash(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.FrontierClash, timeInput, description);
     }
 
     [SlashCommand("failles-neant", "Créer un groupe pour les Failles du néant")]
     [Alias("failles", "rift")]
-    public async Task ActivityVoidRift([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityVoidRift(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.VoidRift, timeInput, description);
     }
 
     [SlashCommand("operations-conjointes", "Créer un groupe pour les Opérations conjointes")]
     [Alias("operations", "JO")]
-    public async Task ActivityJointOperation([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityJointOperation(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.JointOperation, timeInput, description);
     }
 
     [SlashCommand("portes-interstellaires", "Créer un groupe pour les Portes interstellaires")]
     [Alias("portes")]
-    public async Task ActivityInterstellarExploration([Summary("couleur", "De quel couleur de matériaux s'agît-il")] InterstellarColor color, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityInterstellarExploration(
+        [Summary("couleur", "De quel couleur de matériaux s'agît-il")] InterstellarColor color,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.InterstellarExploration, timeInput, description, areRolesEnabled: false, interstellarColor: color);
+        await CreateActivity(ActivityName.InterstellarExploration, timeInput, description, areRolesEnabled: false,
+            interstellarColor: color);
     }
 
     [SlashCommand("3v3", "Créer un groupe pour le 3v3 (Échapper au destin)")]
     [Alias("BR")]
-    public async Task ActivityBreakFromDestiny([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityBreakFromDestiny(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.BreakFromDestiny, timeInput, description, areRolesEnabled: false);
     }
 
     [SlashCommand("8v8", "Créer un groupe pour le 8v8 (Abîme critique)")]
     [Alias("critical")]
-    public async Task ActivityCriticalAbyss([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityCriticalAbyss(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.CriticalAbyss, timeInput, description);
     }
 
     [SlashCommand("evenement", "Créer un groupe pour les évènements")]
     [Alias("event")]
-    public async Task ActivityEvent([Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)] uint maxPlayers = 8, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityEvent(
+        [Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)]
+        uint maxPlayers = 8, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Event, timeInput, description, areRolesEnabled: false, maxPlayers: maxPlayers);
+        await CreateActivity(ActivityName.Event, timeInput, description, areRolesEnabled: false,
+            maxPlayers: maxPlayers);
     }
 
     [SlashCommand("peche", "Créer un groupe pour de la pêche")]
     [Alias("fishing")]
-    public async Task ActivityFishing([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityFishing(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.Fishing, timeInput, description, areRolesEnabled: false);
     }
 
     [SlashCommand("course", "Créer un groupe pour les courses de Mirroria")]
     [Alias("BR")]
-    public async Task ActivityMirroriaRace([Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null, [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
+    public async Task ActivityMirroriaRace(
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
+        [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
         await CreateActivity(ActivityName.MirroriaRace, timeInput, description, areRolesEnabled: false);
     }
 
     #endregion
 
-    private async Task CreateActivity(ActivityName activityName, string? timeInput, string description, bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null, InterstellarColor? interstellarColor = null)
+    private async Task CreateActivity(ActivityName activityName, string? timeInput, string description,
+        bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null,
+        InterstellarColor? interstellarColor = null)
     {
         // Check time if it's specified
         DateTime? dueDate = null;
@@ -146,7 +183,10 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             {
                 await RespondAsync(
                     ephemeral: true,
-                    embed: EmbedUtils.ErrorEmbed("**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`").Build()
+                    embed: EmbedUtils
+                        .ErrorEmbed(
+                            "**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`")
+                        .Build()
                 );
 
                 return;
@@ -237,37 +277,63 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await _activitiesRepository.SaveChanges();
 
         // Add components
-        var components = ActivityComponents(activity.MessageId);
+        var components = _activityHelper.ActivityComponents(activity.MessageId);
 
         await ModifyOriginalResponseAsync(m =>
         {
             m.Content = "";
             m.Components = components.Build();
-            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList()).Build();
+            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList())
+                .Build();
         });
+
+        // Add job to close this activity in scheduler if due date is specified
+        if (dueDate is { } dueDateTime)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+
+            var job = JobBuilder.Create<ActivityCloseJob>()
+                .WithIdentity(activity.JobKey, "activity-close")
+                .WithDescription("Automatically close an activity after due date has passed")
+                .UsingJobData(nameof(ActivityCloseJob.GuildId), (long) activity.GuildId)
+                .UsingJobData(nameof(ActivityCloseJob.ChannelId), (long) activity.ChannelId)
+                .UsingJobData(nameof(ActivityCloseJob.MessageId), (long) activity.MessageId)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"{activity.JobKey}-trigger", "activity-close")
+                .StartAt(dueDateTime)
+                .ForJob(job)
+                .Build();
+
+            await scheduler.ScheduleJob(job, trigger);
+        }
     }
 
     private ActivityPlayer CreateActivityPlayer(Activity activity, SocketGuildUser user, bool areRolesEnabled)
     {
-        return areRolesEnabled ? new ActivityRolePlayer
-        {
-            Activity = activity,
-            UserId = user.Id,
-            Name = user.DisplayName,
-            Roles = _activityHelper.GetPlayerRoles(user.Roles)
-        } : new ActivityPlayer
-        {
-            Activity = activity,
-            UserId = user.Id,
-            Name = user.DisplayName
-        };
+        return areRolesEnabled
+            ? new ActivityRolePlayer
+            {
+                Activity = activity,
+                UserId = user.Id,
+                Name = user.DisplayName,
+                Roles = _activityHelper.GetPlayerRoles(user.Roles)
+            }
+            : new ActivityPlayer
+            {
+                Activity = activity,
+                UserId = user.Id,
+                Name = user.DisplayName
+            };
     }
 
     [ComponentInteraction("activity join:*", ignoreGroupNames: true)]
     public async Task JoinActivity(ulong messageId)
     {
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not
+            { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -292,7 +358,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     public async Task LeaveActivity(ulong messageId)
     {
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not
+            { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -317,7 +384,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     public async Task DeleteActivity(ulong messageId)
     {
         // Check if activity exists
-        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not { } activity)
+        if (await _activitiesRepository.FindActivity(Context.Guild.Id, Context.Channel.Id, messageId) is not
+            { } activity)
         {
             await RespondAsync(
                 ephemeral: true,
@@ -352,12 +420,27 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     private async Task<bool> AddUserToActivity(Activity activity, SocketGuildUser user, bool self)
     {
         // If player is already registered
-        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId, user.Id) is not
+        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId,
+                user.Id) is not
             null)
         {
             await RespondAsync(
                 ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed(self ? "Vous êtes **déjà inscrit** à cette activité" : $"{user.DisplayName} est **déjà inscrit** à cette activité").Build()
+                embed: EmbedUtils
+                    .ErrorEmbed(self
+                        ? "Vous êtes **déjà inscrit** à cette activité"
+                        : $"{user.DisplayName} est **déjà inscrit** à cette activité").Build()
+            );
+
+            return false;
+        }
+
+        // Check if activity is closed
+        if (activity.IsClosed)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Cette activité est fermée").Build()
             );
 
             return false;
@@ -410,11 +493,15 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     private async Task<bool> RemovePlayerFromActivity(Activity activity, SocketGuildUser user, bool self)
     {
         // Check if player is in activity
-        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId, user.Id) is not { } activityPlayer)
+        if (await _activitiesRepository.FindActivityPlayer(activity.GuildId, activity.ChannelId, activity.MessageId,
+                user.Id) is not { } activityPlayer)
         {
             await RespondAsync(
                 ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed(self ? "Vous n'êtes **pas inscrit** à cette activité" : $"{user.DisplayName} n'est **pas inscrit** à cette activité").Build()
+                embed: EmbedUtils
+                    .ErrorEmbed(self
+                        ? "Vous n'êtes **pas inscrit** à cette activité"
+                        : $"{user.DisplayName} n'est **pas inscrit** à cette activité").Build()
             );
 
             return false;
@@ -458,47 +545,6 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return;
         }
 
-        // Fetch players
-        var players = await _activitiesRepository.LoadActivityPlayers(activity);
-
-        await channel.ModifyMessageAsync(activity.MessageId, properties =>
-        {
-            properties.Embed = _activityFormatter.ActivityEmbed(activity, players).Build();
-
-            // Disable join button if the activity is full on join, enable it on leave if activity is not full anymore
-            var isActivityFull = players.Count >= activity.MaxPlayers;
-            properties.Components = updateReason switch
-            {
-                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.MessageId, disabled: true).Build(),
-                ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.MessageId, disabled: false).Build(),
-                _ => Optional<MessageComponent>.Unspecified
-            };
-        });
-    }
-
-    private static ComponentBuilder ActivityComponents(ulong activityId, bool disabled = false)
-    {
-        return new ComponentBuilder()
-            .AddRow(new ActionRowBuilder()
-                .WithButton(new ButtonBuilder()
-                    .WithLabel("Rejoindre")
-                    .WithCustomId($"activity join:{activityId}")
-                    .WithEmote(":white_check_mark:".ToEmote())
-                    .WithStyle(ButtonStyle.Primary)
-                    .WithDisabled(disabled)
-                )
-                .WithButton(new ButtonBuilder()
-                    .WithLabel("Se désinscrire")
-                    .WithCustomId($"activity leave:{activityId}")
-                    .WithEmote(":x:".ToEmote())
-                    .WithStyle(ButtonStyle.Secondary)
-                )
-                .WithButton(new ButtonBuilder()
-                    .WithLabel("Supprimer")
-                    .WithCustomId($"activity delete:{activityId}")
-                    .WithEmote(":wastebasket:".ToEmote())
-                    .WithStyle(ButtonStyle.Danger)
-                )
-            );
+        await _activityHelper.UpdateActivityEmbed(channel, activity, updateReason);
     }
 }

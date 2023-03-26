@@ -72,7 +72,7 @@ public class ActivityFormatter
         // Add time if specified
         if (activity.DueDateTime is { } dueDateTime)
         {
-            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ― {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative)}**");
+            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ― {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
         }
         else
         {
@@ -92,7 +92,7 @@ public class ActivityFormatter
 
         string bannerUrl = GetActivityBanner(activity.Name);
 
-        var color = activityFull ? Colors.CocotteOrange : Colors.CocotteBlue;
+        var color = activity.IsClosed ? Colors.CocotteRed : (activityFull ? Colors.CocotteOrange : Colors.CocotteBlue);
 
         var builder = new EmbedBuilder()
             .WithColor(color)
