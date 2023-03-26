@@ -34,6 +34,7 @@ public class ActivityHelper
                 var role when role == _options.DpsRoleId => PlayerRoles.Dps,
                 var role when role == _options.TankRoleId => PlayerRoles.Tank,
                 var role when role == _options.SupportRoleId => PlayerRoles.Support,
+                var role when role == _options.OrganizerRoleId => PlayerRoles.Organizer,
                 _ => PlayerRoles.None
             };
         }
@@ -80,6 +81,20 @@ public class ActivityHelper
         _ => 0
     };
 
+    public static bool IsEventActivity(ActivityType activityType) =>
+        activityType is ActivityType.Event8Players or ActivityType.Event4Players or ActivityType.Other;
+
+    public bool IsOrganizer(OrganizedActivity organizedActivity, SocketGuildUser user)
+    {
+        // If it is an event, check if the user has organizer role, otherwise helper
+        if (IsEventActivity(organizedActivity.Type))
+        {
+            return user.Roles.Any(r => r.Id == _options.OrganizerRoleId);
+        }
+
+        return user.Roles.Any(r => r.Id == _options.HelperRoleId);
+    }
+
     public async Task UpdateActivityEmbed(IMessageChannel channel, Activity activity, ActivityUpdateReason updateReason)
     {
         // Fetch players
@@ -93,7 +108,7 @@ public class ActivityHelper
             var isActivityFull = players.Count >= activity.MaxPlayers;
             properties.Components = updateReason switch
             {
-                ActivityUpdateReason.PlayerJoin when isActivityFull => ActivityComponents(activity.MessageId, disabled: true).Build(),
+                ActivityUpdateReason.PlayerJoin when isActivityFull && activity is not OrganizedActivity => ActivityComponents(activity.MessageId, disabled: true).Build(),
                 ActivityUpdateReason.PlayerLeave when !isActivityFull => ActivityComponents(activity.MessageId, disabled: false).Build(),
                 _ => Optional<MessageComponent>.Unspecified
             };

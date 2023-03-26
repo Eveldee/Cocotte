@@ -21,8 +21,8 @@ public partial class ActivityModule
                     Activity = activity,
                     Name = $"Player{Random.Shared.Next(1, 100)}",
                     UserId = (ulong) Random.Shared.NextInt64(),
-                    Roles = (PlayerRoles) Random.Shared.Next((int) (PlayerRoles.Dps | PlayerRoles.Helper |
-                                                                      PlayerRoles.Support | PlayerRoles.Tank) + 1)
+                    Roles = (PlayerRoles) Random.Shared.Next((int)PlayerRoles.Helper, (int) (PlayerRoles.Dps | PlayerRoles.Helper |
+                                                                      PlayerRoles.Support | PlayerRoles.Tank) + 1 - (int)PlayerRoles.Helper)
                 };
 
                 // Add the player to the activity

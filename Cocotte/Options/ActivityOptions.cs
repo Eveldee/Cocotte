@@ -4,6 +4,9 @@ public class ActivityOptions
 {
     public const string SectionName = "ActivityOptions";
 
+    public ulong OrganizerRoleId { get; init; }
+    public required string OrganizerEmote { get; init; }
+
     public ulong HelperRoleId { get; init; }
     public required string HelperEmote { get; init; }
 

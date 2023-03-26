@@ -10,6 +10,7 @@ public class ActivityPlayer
     public required ulong UserId { get; init; }
 
     public required string Name { get; init; }
+    public bool IsOrganizer { get; init; }
 
     public ulong GuildId { get; set; }
     public ulong ChannelId { get; set; }

@@ -14,6 +14,15 @@ public static class DateTimeUtils
         return offset;
     }
 
+    public static DateTime NextDateWithDayAndTime(DayOfWeek desired, TimeOnly time)
+    {
+        var date = DateTime.Today;
+        date = date.AddDays(CalculateDayOfWeekOffset(date.DayOfWeek, desired)).WithTimeOnly(time);
+
+        // If it's previous than current date, add 7 days
+        return date < DateTime.Now ? date.AddDays(7) : date;
+    }
+
     public static DateTime WithTimeOnly(this DateTime dateTime, TimeOnly timeOnly)
     {
         return new DateTime(

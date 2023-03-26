@@ -54,7 +54,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     }
 #endif
 
-    #region activities
+    #region Activities
 
     [SlashCommand("abime-néant", "Créer un groupe pour l'Abîme du Néant")]
     [Alias("abime", "abyss")]
@@ -171,12 +171,94 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     #endregion
 
+    #region Organization
+
+    [SlashCommand("organiser-abime", "Organiser un groupe d'aide pour l'abîme du néant")]
+    public async Task OrganizeVoidAbyss(
+        [Summary("jour", "Jour auquel l'activité est prévu")] CocotteDayOfWeek day,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string timeInput,
+        [Summary("joueurs", "Nombre de joueurs maximum qui peuvent s'inscrire")] uint maxPlayers,
+        string description = "")
+    {
+        if (!TimeOnly.TryParse(timeInput, out var time))
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils
+                    .ErrorEmbed(
+                        "**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`")
+                    .Build()
+            );
+
+            return;
+        }
+
+        // Calculate date
+        var date = DateTimeUtils.NextDateWithDayAndTime((DayOfWeek) day, time);
+
+        await CreateActivity(ActivityName.Abyss, null, description, true, maxPlayers, date: date);
+    }
+
+    [SlashCommand("organiser-origine", "Organiser un groupe d'aide pour l'origine de la guerre")]
+    public async Task OrganizeOrigins(
+        [Summary("jour", "Jour auquel l'activité est prévu")] CocotteDayOfWeek day,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string timeInput,
+        [Summary("joueurs", "Nombre de joueurs maximum qui peuvent s'inscrire")] uint maxPlayers,
+        string description = "")
+    {
+        if (!TimeOnly.TryParse(timeInput, out var time))
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils
+                    .ErrorEmbed(
+                        "**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`")
+                    .Build()
+            );
+
+            return;
+        }
+
+        // Calculate date
+        var date = DateTimeUtils.NextDateWithDayAndTime((DayOfWeek) day, time);
+
+        await CreateActivity(ActivityName.OriginsOfWar, null, description, true, maxPlayers, date: date);
+    }
+
+    [SlashCommand("organiser-evenement", "Organiser un groupe d'aide pour l'abîme du néant")]
+    public async Task OrganizeEvent(
+        [Summary("jour", "Jour auquel l'activité est prévu")] CocotteDayOfWeek day,
+        [Summary("heure", "Heure à laquelle l'activité est prévue")] string timeInput,
+        [Summary("joueurs", "Nombre de joueurs maximum qui peuvent s'inscrire")] uint maxPlayers,
+        string description = "")
+    {
+        if (!TimeOnly.TryParse(timeInput, out var time))
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils
+                    .ErrorEmbed(
+                        "**Heure invalide**, essayez avec le **format** `heure:minutes`\nPar exemple: `15:30`")
+                    .Build()
+            );
+
+            return;
+        }
+
+        // Calculate date
+        var date = DateTimeUtils.NextDateWithDayAndTime((DayOfWeek) day, time);
+
+        await CreateActivity(ActivityName.Event, null, description, false, maxPlayers, date: date);
+    }
+
+    #endregion
+
     private async Task CreateActivity(ActivityName activityName, string? timeInput, string description,
         bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null,
-        InterstellarColor? interstellarColor = null)
+        InterstellarColor? interstellarColor = null, DateTime? date = null)
     {
         // Check time if it's specified
-        DateTime? dueDate = null;
+        var dueDate = date;
         if (timeInput is not null)
         {
             if (!TimeOnly.TryParse(timeInput, out var parsedTime))
@@ -209,7 +291,26 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         maxPlayers ??= ActivityHelper.ActivityTypeToMaxPlayers(activityType);
         Activity activity;
 
-        if (stage is not null)
+        // Create organized activity if date is not null
+        if (date is not null)
+        {
+            activity = new OrganizedActivity
+            {
+                MessageId = response.Id,
+                ChannelId = Context.Channel.Id,
+                GuildId = Context.Guild.Id,
+                ThreadId = threadId,
+                CreatorUserId = Context.User.Id,
+                CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
+                Description = description,
+                DueDateTime = dueDate,
+                Type = activityType,
+                Name = activityName,
+                AreRolesEnabled = areRolesEnabled,
+                MaxPlayers = (uint) maxPlayers
+            };
+        }
+        else if (stage is not null)
         {
             activity = new StagedActivity
             {
@@ -269,10 +370,10 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         // Add activity to db
         await _activitiesRepository.AddActivity(activity);
 
-        // Add creator to activity
-        var rolePlayer = CreateActivityPlayer(activity, User, areRolesEnabled);
+        // Add creator to activity, make it an helper
+        var activityPlayer = CreateActivityPlayer(activity, User, areRolesEnabled, activity is OrganizedActivity);
 
-        activity.ActivityPlayers.Add(rolePlayer);
+        activity.ActivityPlayers.Add(activityPlayer);
 
         await _activitiesRepository.SaveChanges();
 
@@ -283,7 +384,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         {
             m.Content = "";
             m.Components = components.Build();
-            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(rolePlayer, 1).ToImmutableList())
+            m.Embed = _activityFormatter.ActivityEmbed(activity, Enumerable.Repeat(activityPlayer, 1).ToImmutableList())
                 .Build();
         });
 
@@ -310,7 +411,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
     }
 
-    private ActivityPlayer CreateActivityPlayer(Activity activity, SocketGuildUser user, bool areRolesEnabled)
+    private ActivityPlayer CreateActivityPlayer(Activity activity, SocketGuildUser user, bool areRolesEnabled, bool isOrganizer = false)
     {
         return areRolesEnabled
             ? new ActivityRolePlayer
@@ -318,13 +419,15 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 Activity = activity,
                 UserId = user.Id,
                 Name = user.DisplayName,
-                Roles = _activityHelper.GetPlayerRoles(user.Roles)
+                Roles = _activityHelper.GetPlayerRoles(user.Roles),
+                IsOrganizer = isOrganizer
             }
             : new ActivityPlayer
             {
                 Activity = activity,
                 UserId = user.Id,
-                Name = user.DisplayName
+                Name = user.DisplayName,
+                IsOrganizer = isOrganizer
             };
     }
 
@@ -435,31 +538,37 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
             return false;
         }
 
-        // Check if activity is closed
-        if (activity.IsClosed)
+        // If activity is an organized activity and user is an organizer, bypass full and closed checks
+        var isOrganizer = activity is OrganizedActivity organizedActivity &&
+                          _activityHelper.IsOrganizer(organizedActivity, user);
+        if (!isOrganizer)
         {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("Cette activité est fermée").Build()
-            );
+            // Check if activity is closed
+            if (activity.IsClosed)
+            {
+                await RespondAsync(
+                    ephemeral: true,
+                    embed: EmbedUtils.ErrorEmbed("Cette activité est fermée").Build()
+                );
 
-            return false;
-        }
+                return false;
+            }
 
-        // Check if activity is full
-        if (await _activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
-        {
-            await RespondAsync(
-                ephemeral: true,
-                embed: EmbedUtils.ErrorEmbed("L'activité est **complète**").Build()
-            );
+            // Check if activity is full
+            if (await _activitiesRepository.ActivityPlayerCount(activity) >= activity.MaxPlayers)
+            {
+                await RespondAsync(
+                    ephemeral: true,
+                    embed: EmbedUtils.ErrorEmbed("L'activité est **complète**").Build()
+                );
 
-            return false;
+                return false;
+            }
         }
 
         _logger.LogTrace("Player {Player} joined activity {Id}", user.DisplayName, activity.MessageId);
 
-        var activityPlayer = CreateActivityPlayer(activity, user, activity.AreRolesEnabled);
+        var activityPlayer = CreateActivityPlayer(activity, user, activity.AreRolesEnabled, isOrganizer: isOrganizer);
 
         // Add player to activity
         activity.ActivityPlayers.Add(activityPlayer);

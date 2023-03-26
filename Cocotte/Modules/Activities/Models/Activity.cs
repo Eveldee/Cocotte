@@ -29,6 +29,12 @@ public class Activity
 
     public List<ActivityPlayer> ActivityPlayers { get; init; } = new();
 
+    [NotMapped]
+    public IEnumerable<ActivityPlayer> Participants => ActivityPlayers.Where(p => !p.IsOrganizer);
+    [NotMapped]
+    public IEnumerable<ActivityPlayer> Organizers => ActivityPlayers.Where(p => p.IsOrganizer);
+
+    [NotMapped]
     public string JobKey => $"{GuildId}/{ChannelId}/{MessageId}";
 
     public override string ToString()

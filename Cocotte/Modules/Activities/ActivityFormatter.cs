@@ -4,6 +4,7 @@ using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Cocotte.Modules.Activities;
 
@@ -31,7 +32,7 @@ public class ActivityFormatter
             ActivityName.InterstellarExploration => "Porte interstellaire",
             ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
             ActivityName.CriticalAbyss => "Abîme critique (8v8)",
-            ActivityName.Event => "Event",
+            ActivityName.Event => "Évènement",
             ActivityName.Fishing => "Pêche",
             ActivityName.MirroriaRace => "Course Mirroria",
             _ => throw new ArgumentOutOfRangeException(nameof(activityName), activityName, null)
@@ -45,25 +46,48 @@ public class ActivityFormatter
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
+        // Load activity players and organizers
+        var participants = activity.Participants.ToArray();
+        var organizers = activity.Organizers.ToArray();
+
         // Activity full
-        bool activityFull = players.Count >= activity.MaxPlayers;
+        bool activityFull = participants.Length >= activity.MaxPlayers;
+
+        // Players and organizers fields
+        var fields = new List<EmbedFieldBuilder>();
+
+        // Add organizers if it's an organized activity
+        if (activity is OrganizedActivity)
+        {
+            var organizersPadding = organizers.Length > 0 ? organizers.Max(p => p.Name.Length) : 0;
+
+            var organizersField = new EmbedFieldBuilder()
+                .WithName("Organisateurs")
+                .WithValue($"{(!organizers.Any() ? "*Aucun organisateur inscrit*" :  string.Join("\n", organizers.Select(p => FormatActivityPlayer(p, organizersPadding, ActivityHelper.IsEventActivity(activity.Type)))))}");
+
+            fields.Add(organizersField);
+        }
 
         // Compute padding using player with longest name
-        var namePadding = players.Count > 0 ? players.Max(p => p.Name.Length) : 0;
+        var participantsPadding = participants.Length > 0 ? participants.Max(p => p.Name.Length) : 0;
 
         // Players field
         var playersField = new EmbedFieldBuilder()
             .WithName("Joueurs inscrits")
-            .WithValue($"{(!players.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", players.Select(p => FormatActivityPlayer(p, namePadding))))}");
+            .WithValue($"{(!participants.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", participants.Select(p => FormatActivityPlayer(p, participantsPadding))))}");
+
+        fields.Add(playersField);
 
         var title = activity switch
         {
             StagedActivity stagedActivity =>
-                $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers}) - Étage {stagedActivity.Stage}",
+                $"{FormatActivityName(activity.Name)} ({participants.Length}/{activity.MaxPlayers}) - Étage {stagedActivity.Stage}",
             InterstellarActivity interstellar =>
                 $"{FormatActivityName(activity.Name)} {_interstellarFormatter.FormatInterstellarColor(interstellar.Color)} ({players.Count}/{activity.MaxPlayers})",
+            OrganizedActivity =>
+                $"{(ActivityHelper.IsEventActivity(activity.Type) ? "Organisation d'évènement" : "Proposition d'aide")} ({participants.Length}/{activity.MaxPlayers})",
             _ =>
-                $"{FormatActivityName(activity.Name)} ({players.Count}/{activity.MaxPlayers})"
+                $"{FormatActivityName(activity.Name)} ({participants.Length}/{activity.MaxPlayers})"
         };
 
         // Build description
@@ -99,7 +123,7 @@ public class ActivityFormatter
             .WithTitle(title)
             .WithDescription(descriptionBuilder.ToString())
             .WithImageUrl(bannerUrl)
-            .WithFields(playersField);
+            .WithFields(fields);
 
         // Add material for interstellar exploration
         if (activity is InterstellarActivity interstellarActivity)
@@ -127,9 +151,10 @@ public class ActivityFormatter
         _ => "NA"
     };
 
-    public string FormatActivityPlayer(ActivityPlayer player, int namePadding) => player switch
+    public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool isEvent = false) => player switch
     {
-        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **―** {RolesToEmotes(rolePlayer.Roles)}",
+        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **╿** {RolesToEmotes(rolePlayer.Roles)}",
+        _ when isEvent && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **╿**  {_options.OrganizerEmote} ",
         _ => $"` {player.Name} `"
     };
 
@@ -139,12 +164,12 @@ public class ActivityFormatter
 
         if (rolePlayerRoles.HasFlag(PlayerRoles.Helper))
         {
-            emotesBuilder.Append($" {_options.HelperEmote} ");
+            emotesBuilder.Append($" {_options.HelperEmote} **╿**");
         }
 
-        if (rolePlayerRoles.HasFlag(PlayerRoles.Dps))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Support))
         {
-            emotesBuilder.Append($" {_options.DpsEmote} ");
+            emotesBuilder.Append($" {_options.SupportEmote} ");
         }
 
         if (rolePlayerRoles.HasFlag(PlayerRoles.Tank))
@@ -152,9 +177,9 @@ public class ActivityFormatter
             emotesBuilder.Append($" {_options.TankEmote} ");
         }
 
-        if (rolePlayerRoles.HasFlag(PlayerRoles.Support))
+        if (rolePlayerRoles.HasFlag(PlayerRoles.Dps))
         {
-            emotesBuilder.Append($" {_options.SupportEmote} ");
+            emotesBuilder.Append($" {_options.DpsEmote} ");
         }
 
         return emotesBuilder.ToString();
