@@ -1,5 +1,6 @@
 using System.Reflection;
 using Cocotte.Modules.Activities;
+using Cocotte.Modules.CompositeRoles;
 using Cocotte.Options;
 using Discord;
 using Discord.Interactions;
@@ -53,10 +54,13 @@ public class CocotteService : BackgroundService
 
         // Initialize modules and commands
         using var scope = _serviceProvider.CreateScope();
+
         #if DEBUG
         await _interactionService.AddModuleAsync(typeof(Modules.Ping.PingModule), scope.ServiceProvider);
         #endif
+
         await _interactionService.AddModuleAsync(typeof(ActivityModule), scope.ServiceProvider);
+        await _interactionService.AddModuleAsync(typeof(CompositeRolesModule), scope.ServiceProvider);
 
         _client.Ready += ClientOnReady;
         _client.InteractionCreated += HandleInteraction;

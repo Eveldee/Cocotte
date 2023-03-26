@@ -1,5 +1,6 @@
 using Cocotte.Modules.Activities;
 using Cocotte.Modules.Activities.Models;
+using Cocotte.Modules.CompositeRoles;
 using Cocotte.Modules.Raids;
 using Cocotte.Options;
 using Cocotte.Services;

@@ -3,7 +3,7 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 
-namespace Cocotte.Modules.Activities;
+namespace Cocotte.Modules.CompositeRoles;
 
 public class CompositeRolesListener
 {
