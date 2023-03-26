@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -20,11 +21,13 @@ namespace Cocotte.Migrations
                     ThreadId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     CreatorUserId = table.Column<ulong>(type: "INTEGER", nullable: false),
                     CreatorDisplayName = table.Column<string>(type: "TEXT", nullable: false),
+                    DueDateTime = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Description = table.Column<string>(type: "TEXT", nullable: true),
                     Type = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<int>(type: "INTEGER", nullable: false),
                     AreRolesEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
                     MaxPlayers = table.Column<uint>(type: "INTEGER", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Discriminator = table.Column<string>(type: "TEXT", nullable: false),
                     Color = table.Column<int>(type: "INTEGER", nullable: true),
                     Stage = table.Column<uint>(type: "INTEGER", nullable: true)

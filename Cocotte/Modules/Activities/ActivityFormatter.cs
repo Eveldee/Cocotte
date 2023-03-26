@@ -70,13 +70,13 @@ public class ActivityFormatter
         var descriptionBuilder = new StringBuilder();
 
         // Add time if specified
-        if (activity.DueTime is { } time)
+        if (activity.DueDateTime is { } dueDateTime)
         {
-            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(DateTime.Today.WithTimeOnly(time), TimestampTagStyles.ShortTime)}**");
+            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ― {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative)}**");
         }
         else
         {
-            descriptionBuilder.AppendLine($"**:clock2: Maintenant**");
+            descriptionBuilder.AppendLine("**:clock2: Maintenant**");
         }
 
         // Add generic message or specified activity description

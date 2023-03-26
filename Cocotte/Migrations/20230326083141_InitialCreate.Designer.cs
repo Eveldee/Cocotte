@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cocotte.Migrations
 {
     [DbContext(typeof(CocotteDbContext))]
-    [Migration("20230325184735_AddActivityCreationDate")]
-    partial class AddActivityCreationDate
+    [Migration("20230326083141_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,6 +49,9 @@ namespace Cocotte.Migrations
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DueDateTime")
                         .HasColumnType("TEXT");
 
                     b.Property<uint>("MaxPlayers")

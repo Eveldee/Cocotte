@@ -48,7 +48,7 @@ namespace Cocotte.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<TimeOnly?>("DueTime")
+                    b.Property<DateTime?>("DueDateTime")
                         .HasColumnType("TEXT");
 
                     b.Property<uint>("MaxPlayers")

@@ -20,4 +20,7 @@ public static class DateTimeUtils
             dateTime.Year, dateTime.Month, dateTime.Day, timeOnly.Hour, timeOnly.Minute, timeOnly.Second
         );
     }
+
+    public static DateTime NextDateWithTimeOfDay(TimeOnly timeOfDay) =>
+        DateTime.Now.TimeOfDay.Ticks > timeOfDay.Ticks ? DateTime.Now.AddDays(1).WithTimeOnly(timeOfDay) : DateTime.Now.WithTimeOnly(timeOfDay);
 }

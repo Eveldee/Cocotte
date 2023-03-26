@@ -139,7 +139,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
     private async Task CreateActivity(ActivityName activityName, string? timeInput, string description, bool areRolesEnabled = true, uint? maxPlayers = null, uint? stage = null, InterstellarColor? interstellarColor = null)
     {
         // Check time if it's specified
-        TimeOnly? time = null;
+        DateTime? dueDate = null;
         if (timeInput is not null)
         {
             if (!TimeOnly.TryParse(timeInput, out var parsedTime))
@@ -152,7 +152,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 return;
             }
 
-            time = parsedTime;
+            dueDate = DateTimeUtils.NextDateWithTimeOfDay(parsedTime);
         }
 
         _logger.LogTrace("{User} is creating activity {Activity}", User.DisplayName, activityName);
@@ -180,7 +180,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
-                DueTime = time,
+                DueDateTime = dueDate,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = areRolesEnabled,
@@ -199,7 +199,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
-                DueTime = time,
+                DueDateTime = dueDate,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = false,
@@ -218,7 +218,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 CreatorUserId = Context.User.Id,
                 CreatorDisplayName = ((SocketGuildUser) Context.User).DisplayName,
                 Description = description,
-                DueTime = time,
+                DueDateTime = dueDate,
                 Type = activityType,
                 Name = activityName,
                 AreRolesEnabled = areRolesEnabled,
