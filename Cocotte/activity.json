@@ -1,5 +1,8 @@
 ﻿{
 	"ActivityOptions": {
+		"OrganizerRoleId": 0,
+		"OrganizerEmote": "",
+
 		"HelperRoleId": 0,
 		"HelperEmote": "",
 

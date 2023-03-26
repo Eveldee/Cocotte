@@ -85,7 +85,7 @@ public class ActivityFormatter
             InterstellarActivity interstellar =>
                 $"{FormatActivityName(activity.Name)} {_interstellarFormatter.FormatInterstellarColor(interstellar.Color)} ({players.Count}/{activity.MaxPlayers})",
             OrganizedActivity =>
-                $"{(ActivityHelper.IsEventActivity(activity.Type) ? "Organisation d'évènement" : "Proposition d'aide")} ({participants.Length}/{activity.MaxPlayers})",
+                $"{(ActivityHelper.IsEventActivity(activity.Type) ? "Organisation d'évènement" : $"Proposition d'aide - {FormatActivityName(activity.Name)}")} ({participants.Length}/{activity.MaxPlayers})",
             _ =>
                 $"{FormatActivityName(activity.Name)} ({participants.Length}/{activity.MaxPlayers})"
         };

@@ -532,7 +532,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 embed: EmbedUtils
                     .ErrorEmbed(self
                         ? "Vous êtes **déjà inscrit** à cette activité"
-                        : $"{user.DisplayName} est **déjà inscrit** à cette activité").Build()
+                        : $"{MentionUtils.MentionUser(user.Id)} est **déjà inscrit** à cette activité").Build()
             );
 
             return false;
@@ -582,7 +582,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
         await thread.AddUserAsync(user);
 
-        string embedContent = $"**{user.DisplayName}** a été **ajouté** à l'activité";
+        string embedContent = $"{MentionUtils.MentionUser(user.Id)} a été **ajouté** à l'activité";
         if (self)
         {
             await thread.SendMessageAsync(
@@ -610,7 +610,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
                 embed: EmbedUtils
                     .ErrorEmbed(self
                         ? "Vous n'êtes **pas inscrit** à cette activité"
-                        : $"{user.DisplayName} n'est **pas inscrit** à cette activité").Build()
+                        : $"{MentionUtils.MentionUser(user.Id)} n'est **pas inscrit** à cette activité").Build()
             );
 
             return false;
@@ -629,7 +629,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
         await thread.RemoveUserAsync(user);
 
-        string embedContent = $"{user.DisplayName} a été **enlevé** de l'activité";
+        string embedContent = $"{MentionUtils.MentionUser(user.Id)} a été **enlevé** de l'activité";
         if (self)
         {
             await thread.SendMessageAsync(
