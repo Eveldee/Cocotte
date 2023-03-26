@@ -19,15 +19,11 @@ namespace Cocotte.Modules.Ping;
 public class PingModule : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly ILogger<PingModule> _logger;
-    private readonly SharedCounter _sharedCounter;
-    private readonly TransientCounter _transientCounter;
     private static readonly SemaphoreSlim CounterWait = new(0);
 
-    public PingModule(ILogger<PingModule> logger, SharedCounter sharedCounter, TransientCounter transientCounter)
+    public PingModule(ILogger<PingModule> logger)
     {
         _logger = logger;
-        _sharedCounter = sharedCounter;
-        _transientCounter = transientCounter;
     }
 
     [SlashCommand("runtime-info", "Get runtime info")]
@@ -165,94 +161,6 @@ public class PingModule : InteractionModuleBase<SocketInteractionContext>
     public async Task TestButtonClick(int buttonId, string userName)
     {
         await RespondAsync($"{userName} clicked on button: {buttonId}");
-    }
-
-    [SlashCommand("counter-shared", "Spawn a shared counter")]
-    public async Task CounterShared()
-    {
-        var component = new ComponentBuilder()
-            .WithButton("Increment", "increment_shared");
-
-        await RespondAsync($"Counter: {_sharedCounter.Count}", components: component.Build());
-    }
-
-    [ComponentInteraction("increment_shared")]
-    public async Task SharedCounterIncrement()
-    {
-        _logger.LogTrace("Received increment on shared counter");
-        _sharedCounter.Count++;
-
-        try
-        {
-            await (Context.Interaction as IComponentInteraction)!.UpdateAsync(msg =>
-            {
-                msg.Content = $"Counter: {_sharedCounter.Count}";
-            });
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "An error occured while updating original message:");
-        }
-        await RespondAsync();
-    }
-
-    [SlashCommand("counter-transient", "Spawn a transient counter")]
-    public async Task CounterTransient()
-    {
-        var component = new ComponentBuilder()
-            .WithButton("Increment", "increment_transient");
-
-        await RespondAsync($"Counter: {_transientCounter.Count}", components: component.Build());
-    }
-
-    [ComponentInteraction("increment_transient")]
-    public async Task TransientCounterIncrement()
-    {
-        _logger.LogTrace("Received increment on transient counter");
-        _transientCounter.Count++;
-
-        try
-        {
-            await (Context.Interaction as IComponentInteraction)!.UpdateAsync(msg =>
-            {
-                msg.Content = $"Counter: {_transientCounter.Count}";
-            });
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "An error occured while updating original message:");
-        }
-        await RespondAsync();
-    }
-
-    [SlashCommand("counter-transient-wait", "Spawn a transient counter using wait")]
-    public async Task CounterTransientWait()
-    {
-        var component = new ComponentBuilder()
-            .WithButton("Increment", "increment_transient_wait");
-
-        await RespondAsync($"Counter: {_transientCounter.Count}", components: component.Build());
-        var response = await GetOriginalResponseAsync();
-
-        while (true)
-        {
-            // Wait for the button to be clicked
-            _logger.LogTrace("Waiting for semaphore release");
-            await CounterWait.WaitAsync();
-
-            _logger.LogTrace("Received increment on transient wait counter");
-            _transientCounter.Count++;
-
-            await ModifyOriginalResponseAsync(m => m.Content = $"Counter: {_transientCounter.Count}");
-        }
-    }
-
-    [ComponentInteraction("increment_transient_wait")]
-    public async Task WaitCounterIncrement()
-    {
-        CounterWait.Release();
-
-        await RespondAsync();
     }
 
     [SlashCommand("select-test", "Test menu select")]

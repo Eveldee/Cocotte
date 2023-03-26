@@ -47,6 +47,5 @@ public class ActivityCloseJob : IJob
 
         // Update embed
         await _activityHelper.UpdateActivityEmbed(channel, activity, ActivityUpdateReason.Update);
-
     }
 }
