@@ -100,7 +100,7 @@ public class ActivityFormatter
             {
                 descriptionBuilder.AppendLine($"**:date: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.LongDate)}**");
             }
-            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ╿ {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
+            descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} | {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
             descriptionBuilder.AppendLine();
         }
         else
@@ -163,8 +163,8 @@ public class ActivityFormatter
 
     public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool isEvent = false) => player switch
     {
-        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **╿** {RolesToEmotes(rolePlayer.Roles)}",
-        _ when isEvent && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **╿**  {_options.OrganizerEmote} ",
+        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **|** {RolesToEmotes(rolePlayer.Roles)}",
+        _ when isEvent && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **|**  {_options.OrganizerEmote} ",
         _ => $"` {player.Name} `"
     };
 
@@ -174,7 +174,7 @@ public class ActivityFormatter
 
         if (rolePlayerRoles.HasFlag(PlayerRoles.Helper))
         {
-            emotesBuilder.Append($" {_options.HelperEmote} **╿**");
+            emotesBuilder.Append($" {_options.HelperEmote} **|**");
         }
 
         if (rolePlayerRoles.HasFlag(PlayerRoles.Support))
