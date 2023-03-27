@@ -4,7 +4,6 @@ using Cocotte.Options;
 using Cocotte.Utils;
 using Discord;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 
 namespace Cocotte.Modules.Activities;
 
@@ -96,7 +95,13 @@ public class ActivityFormatter
         // Add time if specified
         if (activity.DueDateTime is { } dueDateTime)
         {
+            // Also Add date of organized
+            if (activity is OrganizedActivity)
+            {
+                descriptionBuilder.AppendLine($"**:date: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.LongDate)}**");
+            }
             descriptionBuilder.AppendLine($"**:clock2: {TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.ShortTime)} ╿ {(activity.IsClosed ? "Fermée" : TimestampTag.FormatFromDateTime(dueDateTime, TimestampTagStyles.Relative))}**");
+            descriptionBuilder.AppendLine();
         }
         else
         {
