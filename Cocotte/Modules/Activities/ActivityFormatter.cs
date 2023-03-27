@@ -119,9 +119,9 @@ public class ActivityFormatter
         descriptionBuilder.AppendLine();
         descriptionBuilder.Append(
         $"""
-        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
-                                **[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**
-        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
+        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
+                                   **[Fil associé]({ChannelUtils.GetChannelLink(activity.GuildId, activity.ThreadId)})**
+        **⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯**
         """);
 
         string bannerUrl = GetActivityBanner(activity.Name);
