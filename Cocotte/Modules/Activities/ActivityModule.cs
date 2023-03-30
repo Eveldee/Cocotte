@@ -499,7 +499,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         }
 
         // Check if user has permission to delete this activity
-        if (User.Id != activity.CreatorUserId && !User.GetPermissions((IGuildChannel) Context.Channel).ManageMessages)
+        if (User.Id != activity.CreatorUserId && Context.User.Id != (await Context.Client.GetApplicationInfoAsync()).Owner.Id)
         {
             await RespondAsync(
                 ephemeral: true,
