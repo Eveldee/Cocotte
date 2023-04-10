@@ -93,6 +93,12 @@ await using(var scope = host.Services.CreateAsyncScope())
     }
     else
     {
+        // Backup database before migrations
+        if (File.Exists("cocotte.db"))
+        {
+            File.Copy("cocotte.db", $"cocotte.{DateTime.UtcNow:s}.db");
+        }
+
         // Apply migrations
         await dbContext.Database.MigrateAsync();
     }
