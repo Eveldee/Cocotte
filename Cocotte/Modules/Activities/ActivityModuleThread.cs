@@ -189,6 +189,56 @@ public partial class ActivityModule
         await RespondWithModalAsync<ActivityDescriptionModal>("activity description_modal");
     }
 
+    [SlashCommand("etage", "Changer l'étage de l'activité pour l'abîme du néant et l'origine de la guerre")]
+    public async Task ThreadChangeStage([Summary("étage", "Nouvel étage, de 1 à 6 en abîme du néant, et de 1 à 25 en origine de la guerre")] [MinValue(1), MaxValue(25)] uint stage)
+    {
+        // Get activity linked to this thread
+        var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
+
+        if (!await CheckCommandInThread(activity, checkCreator: true) || activity is null)
+        {
+            return;
+        }
+
+        if (activity is not StagedActivity stagedActivity)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Cette commande n'est utilisable que pour l'abîme du néant et l'origine de la guerre").Build()
+            );
+
+            return;
+        }
+
+        // Check if stage is valid
+        var stageValid = (activity.Name, stage) switch
+        {
+            (ActivityName.Abyss, >= 1 and <= 6) => true,
+            (ActivityName.OriginsOfWar, >= 1 and <= 25) => true,
+            _ => false
+        };
+
+        if (!stageValid)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Etage invalide").Build()
+            );
+
+            return;
+        }
+
+        stagedActivity.Stage = stage;
+        await _activitiesRepository.SaveChanges();
+
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.Update);
+
+        await RespondAsync(
+            ephemeral: true,
+            embed: EmbedUtils.InfoEmbed($"L'activité est maintenant bien définie à **l'étage {stage}**").Build()
+        );
+    }
+
     [ModalInteraction("activity description_modal", ignoreGroupNames: true)]
     public async Task ActivityDescriptionSubmit(ActivityDescriptionModal descriptionModal)
     {
