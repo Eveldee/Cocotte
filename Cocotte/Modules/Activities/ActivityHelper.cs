@@ -9,7 +9,7 @@ namespace Cocotte.Modules.Activities;
 
 public class ActivityHelper
 {
-    private const uint UnlimitedPlayers = uint.MaxValue;
+    public const uint UnlimitedPlayers = uint.MaxValue;
 
     private readonly ActivityOptions _options;
     private readonly ActivitiesRepository _activitiesRepository;
@@ -57,32 +57,31 @@ public class ActivityHelper
 
         ActivityName.BreakFromDestiny => ActivityType.Pvp3Players,
 
-        ActivityName.Event or
-            ActivityName.Fishing => ActivityType.Event8Players,
+        ActivityName.Minigame => ActivityType.Other8Players,
 
-        ActivityName.MirroriaRace => ActivityType.Event4Players,
+        ActivityName.MirroriaRace => ActivityType.Other4Players,
 
-        _ => ActivityType.Other
+        _ => ActivityType.OtherUnlimitedPlayers
     };
 
     public static uint ActivityTypeToMaxPlayers(ActivityType activityType) => activityType switch
     {
         ActivityType.Pve4Players or
-        ActivityType.Event4Players => 4,
+        ActivityType.Other4Players => 4,
 
         ActivityType.Pve8Players or
         ActivityType.Pvp8Players or
-        ActivityType.Event8Players => 8,
+        ActivityType.Other8Players => 8,
 
         ActivityType.Pvp3Players => 3,
 
-        ActivityType.Other => UnlimitedPlayers,
+        ActivityType.OtherUnlimitedPlayers => UnlimitedPlayers,
 
         _ => 0
     };
 
     public static bool IsEventActivity(ActivityType activityType) =>
-        activityType is ActivityType.Event8Players or ActivityType.Event4Players or ActivityType.Other;
+        activityType is ActivityType.Other8Players or ActivityType.Other4Players or ActivityType.OtherUnlimitedPlayers;
 
     public bool IsOrganizer(OrganizedActivity organizedActivity, SocketGuildUser user)
     {

@@ -12,6 +12,7 @@ public enum ActivityName
     BreakFromDestiny,
     CriticalAbyss,
     Fishing,
-    Event,
-    MirroriaRace
+    Minigame,
+    MirroriaRace,
+    Event
 }

@@ -31,7 +31,7 @@ public class ActivityFormatter
             ActivityName.InterstellarExploration => "Porte interstellaire",
             ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
             ActivityName.CriticalAbyss => "Abîme critique (8v8)",
-            ActivityName.Event => "Évènement",
+            ActivityName.Minigame => "Évènement",
             ActivityName.Fishing => "Pêche",
             ActivityName.MirroriaRace => "Course Mirroria",
             _ => throw new ArgumentOutOfRangeException(nameof(activityName), activityName, null)
@@ -77,16 +77,19 @@ public class ActivityFormatter
 
         fields.Add(playersField);
 
+        string countTitlePart = activity.MaxPlayers == ActivityHelper.UnlimitedPlayers
+            ? ""
+            : $"({participants.Length}/{activity.MaxPlayers})";
         var title = activity switch
         {
             StagedActivity stagedActivity =>
-                $"{FormatActivityName(activity.Name)} ({participants.Length}/{activity.MaxPlayers}) - Étage {stagedActivity.Stage}",
+                $"{FormatActivityName(activity.Name)} {countTitlePart} - Étage {stagedActivity.Stage}",
             InterstellarActivity interstellar =>
-                $"{FormatActivityName(activity.Name)} {_interstellarFormatter.FormatInterstellarColor(interstellar.Color)} ({players.Count}/{activity.MaxPlayers})",
+                $"{FormatActivityName(activity.Name)} {_interstellarFormatter.FormatInterstellarColor(interstellar.Color)} {countTitlePart}",
             OrganizedActivity =>
-                $"{(ActivityHelper.IsEventActivity(activity.Type) ? "Organisation d'évènement" : $"Proposition d'aide - {FormatActivityName(activity.Name)}")} ({participants.Length}/{activity.MaxPlayers})",
+                $"{(ActivityHelper.IsEventActivity(activity.Type) ? "Organisation d'évènement" : $"Proposition d'aide - {FormatActivityName(activity.Name)}")} {countTitlePart}",
             _ =>
-                $"{FormatActivityName(activity.Name)} ({participants.Length}/{activity.MaxPlayers})"
+                $"{FormatActivityName(activity.Name)} {countTitlePart}"
         };
 
         // Build description
@@ -156,7 +159,7 @@ public class ActivityFormatter
         ActivityName.BreakFromDestiny => "BR",
         ActivityName.CriticalAbyss => "CA",
         ActivityName.Fishing => "FI",
-        ActivityName.Event => "EV",
+        ActivityName.Minigame => "EV",
         ActivityName.MirroriaRace => "MR",
         _ => "NA"
     };

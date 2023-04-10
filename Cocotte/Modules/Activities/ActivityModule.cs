@@ -142,12 +142,12 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     [SlashCommand("evenement", "Créer un groupe pour les évènements")]
     [Alias("event")]
-    public async Task ActivityEvent(
+    public async Task ActivityMinigame(
         [Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)]
         uint maxPlayers = 8, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
         [Summary("description", "Message accompagnant la demande de groupe")] string description = "")
     {
-        await CreateActivity(ActivityName.Event, timeInput, description, areRolesEnabled: false,
+        await CreateActivity(ActivityName.Minigame, timeInput, description, areRolesEnabled: false,
             maxPlayers: maxPlayers);
     }
 

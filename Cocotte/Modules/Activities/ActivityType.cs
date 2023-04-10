@@ -6,7 +6,7 @@ public enum ActivityType
     Pve8Players,
     Pvp8Players,
     Pvp3Players,
-    Event8Players,
-    Event4Players,
-    Other
+    Other8Players,
+    Other4Players,
+    OtherUnlimitedPlayers
 }
