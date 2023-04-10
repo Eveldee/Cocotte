@@ -27,6 +27,7 @@ public partial class ActivityModule
     - `/activite description` - **Modifie la description** de l'activité
 
     - `/activite etage` - Pour l'abîme du néant et l'origine de la guerre, **modifie l'étage** de l'activité
+    - `/activite completer` - Marquer un joueur comme ayant complété l'activité, le barrant dans la liste des inscrits
     """;
 
     private async Task<ulong> CreateThread(ActivityName activityName, string creatorName)
@@ -236,6 +237,67 @@ public partial class ActivityModule
         await RespondAsync(
             ephemeral: true,
             embed: EmbedUtils.InfoEmbed($"L'activité est maintenant bien définie à **l'étage {stage}**").Build()
+        );
+    }
+
+    [SlashCommand("completer", "Marquer un jour comme ayant complété une activité, le barrant dans la liste des inscrits")]
+    public async Task ThreadPlayerComplete([Summary("joueur", "Le joueur qui a complété l'activité")] IUser user)
+    {
+        // Get activity linked to this thread
+        var activity = _activitiesRepository.FindActivityByThreadId(Context.Channel.Id);
+
+        if (!await CheckCommandInThread(activity, checkCreator: false) || activity is null)
+        {
+            return;
+        }
+
+        // Check if activity is organized activity
+        if (activity is not OrganizedActivity)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Cette commande n'est pas supporté dans ce type d'activité").Build()
+            );
+
+            return;
+        }
+
+        // Check if player is in activity
+        var players = await _activitiesRepository.LoadActivityPlayers(activity);
+        var player = players.FirstOrDefault(p => p.UserId == user.Id);
+
+        if (player is null)
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Ce joueur n'est pas dans cette activité").Build()
+            );
+
+            return;
+        }
+
+
+        // Check if user who used the command is an organizer
+        var organizer = players.FirstOrDefault(p => p.UserId == User.Id);
+
+        if (organizer is not { IsOrganizer: true })
+        {
+            await RespondAsync(
+                ephemeral: true,
+                embed: EmbedUtils.ErrorEmbed("Seul un organisateur de l'activité peut effectuer cette action").Build()
+            );
+
+            return;
+        }
+
+        player.HasCompleted = !player.HasCompleted;
+        await _activitiesRepository.SaveChanges();
+
+        await UpdateActivityEmbed(activity, ActivityUpdateReason.Update);
+
+        await RespondAsync(
+            ephemeral: true,
+            embed: EmbedUtils.InfoEmbed($"L'inscription du joueur {((IGuildUser)user).DisplayName} a bien été mis à jour").Build()
         );
     }
 

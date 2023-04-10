@@ -11,6 +11,7 @@ public class ActivityPlayer
 
     public required string Name { get; init; }
     public bool IsOrganizer { get; init; }
+    public bool HasCompleted { get; set; }
 
     public ulong GuildId { get; set; }
     public ulong ChannelId { get; set; }

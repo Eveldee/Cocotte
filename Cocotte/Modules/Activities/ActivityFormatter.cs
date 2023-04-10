@@ -46,7 +46,7 @@ public class ActivityFormatter
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
         // Load activity players and organizers
-        var participants = activity.Participants.ToArray();
+        var participants = activity.Participants.OrderBy(p => p.HasCompleted).ToArray();
         var organizers = activity.Organizers.ToArray();
 
         // Activity full
@@ -164,7 +164,12 @@ public class ActivityFormatter
         _ => "NA"
     };
 
-    public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool isEvent = false) => player switch
+    public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool isEvent = false) =>
+        player.HasCompleted
+            ? $"~~{FormatActivityPlayerSub(player, namePadding, isEvent)}~~"
+            : FormatActivityPlayerSub(player, namePadding, isEvent);
+
+    private string FormatActivityPlayerSub(ActivityPlayer player, int namePadding, bool isEvent = false) => player switch
     {
         ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **|** {RolesToEmotes(rolePlayer.Roles)}",
         _ when isEvent && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **|**  {_options.OrganizerEmote} ",
