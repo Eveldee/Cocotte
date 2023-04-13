@@ -9,6 +9,9 @@ namespace Cocotte.Modules.Activities;
 
 public class ActivityFormatter
 {
+    private const int FieldsChunkSize = 20;
+    private const string EmptyField = "\u200B";
+
     private readonly ActivityOptions _options;
     private readonly InterstellarFormatter _interstellarFormatter;
 
@@ -45,6 +48,8 @@ public class ActivityFormatter
 
     public EmbedBuilder ActivityEmbed(Activity activity, IReadOnlyCollection<ActivityPlayer> players)
     {
+        int GetNamesPadding(IReadOnlyCollection<ActivityPlayer> activityPlayers) => activityPlayers.Count > 0 ? activityPlayers.Max(p => p.Name.Length) : 0;
+
         // Load activity players and organizers
         var participants = activity.Participants.OrderBy(p => p.HasCompleted).ToArray();
         var organizers = activity.Organizers.ToArray();
@@ -58,24 +63,50 @@ public class ActivityFormatter
         // Add organizers if it's an organized activity
         if (activity is OrganizedActivity)
         {
-            var organizersPadding = organizers.Length > 0 ? organizers.Max(p => p.Name.Length) : 0;
+            var organizersFields = organizers.Chunk(FieldsChunkSize).Select(organizersChunk =>
+                    new EmbedFieldBuilder()
+                        .WithName(EmptyField)
+                        .WithIsInline(true)
+                        .WithValue($"{(!organizersChunk.Any() ? "*Aucun organisateur inscrit*" :  string.Join("\n", organizersChunk.Select(p => FormatActivityPlayer(p, GetNamesPadding(organizersChunk), showOrganizerRole: ActivityHelper.IsEventActivity(activity.Type)))))}")
+            ).ToArray();
 
-            var organizersField = new EmbedFieldBuilder()
-                .WithName("Organisateurs")
-                .WithValue($"{(!organizers.Any() ? "*Aucun organisateur inscrit*" :  string.Join("\n", organizers.Select(p => FormatActivityPlayer(p, organizersPadding, ActivityHelper.IsEventActivity(activity.Type)))))}");
+            if (organizersFields.Length > 0)
+            {
+                organizersFields[0].Name = "Organisateurs";
+            }
 
-            fields.Add(organizersField);
+            // Complete with empty fields to go to next line
+            var emptyFields = Enumerable.Repeat(0, (3 - organizersFields.Length) % 3).Select(_ =>
+                new EmbedFieldBuilder()
+                    .WithName(EmptyField)
+                    .WithValue(EmptyField)
+                    .WithIsInline(true)
+            );
+
+            fields.AddRange(organizersFields);
+            fields.AddRange(emptyFields);
         }
 
-        // Compute padding using player with longest name
-        var participantsPadding = participants.Length > 0 ? participants.Max(p => p.Name.Length) : 0;
-
         // Players field
-        var playersField = new EmbedFieldBuilder()
-            .WithName("Joueurs inscrits")
-            .WithValue($"{(!participants.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", participants.Select(p => FormatActivityPlayer(p, participantsPadding))))}");
+        var playersFields = participants.Chunk(FieldsChunkSize).Select(participantsChunk =>
+                new EmbedFieldBuilder()
+                    .WithName(EmptyField)
+                    .WithIsInline(true)
+                    .WithValue($"{(!participantsChunk.Any() ? "*Aucun joueur inscrit*" :  string.Join("\n", participantsChunk.Select(p => FormatActivityPlayer(p, GetNamesPadding(participantsChunk), hideRoles: activity is OrganizedActivity))))}")
+        ).ToList();
 
-        fields.Add(playersField);
+        // Insert empty fields in third column
+        for (int i = 2; i <= playersFields.Count; i += 3)
+        {
+            playersFields.Insert(i, new EmbedFieldBuilder().WithName(EmptyField).WithValue(EmptyField).WithIsInline(true));
+        }
+
+        if (playersFields.Count > 0)
+        {
+            playersFields[0].Name = "Joueurs inscrits";
+        }
+
+        fields.AddRange(playersFields);
 
         string countTitlePart = activity.MaxPlayers == ActivityHelper.UnlimitedPlayers
             ? ""
@@ -129,7 +160,9 @@ public class ActivityFormatter
 
         string bannerUrl = GetActivityBanner(activity.Name);
 
-        var color = activity.IsClosed ? Colors.CocotteRed : (activityFull ? Colors.CocotteOrange : Colors.CocotteBlue);
+        var color = activity.IsClosed ?
+                    Colors.CocotteRed : activityFull ?
+                                        Colors.CocotteOrange : Colors.CocotteBlue;
 
         var builder = new EmbedBuilder()
             .WithColor(color)
@@ -164,16 +197,16 @@ public class ActivityFormatter
         _ => "NA"
     };
 
-    public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool isEvent = false) =>
+    public string FormatActivityPlayer(ActivityPlayer player, int namePadding, bool showOrganizerRole = false, bool hideRoles = false) =>
         player.HasCompleted
-            ? $"~~{FormatActivityPlayerSub(player, namePadding, isEvent)}~~"
-            : FormatActivityPlayerSub(player, namePadding, isEvent);
+            ? $"~~{FormatActivityPlayerSub(player, namePadding, showOrganizerRole, hideRoles)}~~"
+            : FormatActivityPlayerSub(player, namePadding, showOrganizerRole, hideRoles);
 
-    private string FormatActivityPlayerSub(ActivityPlayer player, int namePadding, bool isEvent = false) => player switch
+    private string FormatActivityPlayerSub(ActivityPlayer player, int namePadding, bool showOrganizerRole = false, bool hideRoles = false) => player switch
     {
-        ActivityRolePlayer rolePlayer => $"` {player.Name.PadRight(namePadding)} ` **|** {RolesToEmotes(rolePlayer.Roles)}",
-        _ when isEvent && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **|**  {_options.OrganizerEmote} ",
-        _ => $"` {player.Name} `"
+        ActivityRolePlayer rolePlayer when !hideRoles => $"` {player.Name.PadRight(namePadding)} ` **|** {RolesToEmotes(rolePlayer.Roles)}",
+        _ when showOrganizerRole && player.IsOrganizer => $"` {player.Name.PadRight(namePadding)} ` **|**  {_options.OrganizerEmote} ",
+        _ => $"` {player.Name.PadRight(namePadding)} `"
     };
 
     private string RolesToEmotes(PlayerRoles rolePlayerRoles)
