@@ -56,7 +56,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
 
     #region Activities
 
-    [SlashCommand("abime-néant", "Créer un groupe pour l'Abîme du Néant")]
+    [SlashCommand("abime-neant", "Créer un groupe pour l'Abîme du Néant")]
     [Alias("abime", "abyss")]
     public async Task ActivityVoidAbyss(
         [Summary("étage", "A quel étage vous êtes")] [MinValue(1), MaxValue(6)] uint stage,
@@ -140,8 +140,8 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await CreateActivity(ActivityName.CriticalAbyss, timeInput, description);
     }
 
-    [SlashCommand("evenement", "Créer un groupe pour les évènements")]
-    [Alias("event")]
+    [SlashCommand("mini-jeux", "Créer un groupe pour les mini-jeux")]
+    [Alias("jeux")]
     public async Task ActivityMinigame(
         [Summary("joueurs", "Nombre de joueurs maximum pour cette activité")] [MinValue(2), MaxValue(16)]
         uint maxPlayers = 8, [Summary("heure", "Heure à laquelle l'activité est prévue")] string? timeInput = null,
@@ -225,7 +225,7 @@ public partial class ActivityModule : InteractionModuleBase<SocketInteractionCon
         await CreateActivity(ActivityName.OriginsOfWar, null, description, true, maxPlayers, date: date);
     }
 
-    [SlashCommand("organiser-evenement", "Organiser un groupe d'aide pour l'abîme du néant")]
+    [SlashCommand("organiser-evenement", "Organiser un événement")]
     public async Task OrganizeEvent(
         [Summary("jour", "Jour auquel l'activité est prévu")] CocotteDayOfWeek day,
         [Summary("heure", "Heure à laquelle l'activité est prévue")] string timeInput,

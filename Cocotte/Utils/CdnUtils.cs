@@ -10,7 +10,7 @@ public class CdnUtils
     /// <summary>
     /// Needs to be updated each time a media is updated on the CDN
     /// </summary>
-    private const string RandomSuffix = "assets1";
+    private const string RandomSuffix = "assets2";
 
     public static string GetAsset(string assetName)
     {

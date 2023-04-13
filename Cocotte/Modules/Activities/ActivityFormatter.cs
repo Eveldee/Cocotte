@@ -34,9 +34,10 @@ public class ActivityFormatter
             ActivityName.InterstellarExploration => "Porte interstellaire",
             ActivityName.BreakFromDestiny => "Échapper au destin (3v3)",
             ActivityName.CriticalAbyss => "Abîme critique (8v8)",
-            ActivityName.Minigame => "Évènement",
+            ActivityName.Minigame => "Mini-Jeux",
             ActivityName.Fishing => "Pêche",
             ActivityName.MirroriaRace => "Course Mirroria",
+            ActivityName.Event => "Évènement",
             _ => throw new ArgumentOutOfRangeException(nameof(activityName), activityName, null)
         };
     }
@@ -192,8 +193,9 @@ public class ActivityFormatter
         ActivityName.BreakFromDestiny => "BR",
         ActivityName.CriticalAbyss => "CA",
         ActivityName.Fishing => "FI",
-        ActivityName.Minigame => "EV",
+        ActivityName.Minigame => "MG",
         ActivityName.MirroriaRace => "MR",
+        ActivityName.Event => "EV",
         _ => "NA"
     };
 
